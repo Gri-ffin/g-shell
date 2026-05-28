@@ -16,7 +16,11 @@ int main(int argc, char *argv[]) {
 
       command[strcspn(command, "\n")] = '\0';
 
-      if (strcmp(command, "xyz") == 0) {
+      if (strcmp(command, "exit") == 0) {
+        exit(0);
+      } else if (strncmp(command, "echo", 4) == 0) {
+        printf("%s\n", command + 5);
+      } else {
         printf("%s: command not found\n", command);
       }
     }
