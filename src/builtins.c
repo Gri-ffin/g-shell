@@ -2,14 +2,20 @@
 #include "path.h"
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-void handle_echo(char *arg) {
-  if (arg == NULL) {
-    printf("\n");
-  } else {
-    printf("%s\n", arg);
+void handle_echo(char **args) {
+  for (int i = 1; args[i] != NULL; i++) {
+    printf("%s", args[i]);
+    if (args[i + 1] != NULL) {
+      printf(" ");
+    }
   }
+  printf("\n");
 }
 
 void handle_type(char *arg) {
@@ -29,5 +35,27 @@ void handle_type(char *arg) {
     printf("%s is %s\n", arg, resolved_path);
   } else {
     printf("%s: not found\n", arg);
+  }
+}
+
+void run_program(const char *program, char **args) {
+  char resolved_path[PATH_MAX];
+  if (resolve_path(program, resolved_path, sizeof(resolved_path))) {
+    pid_t pid = fork();
+    if (pid == -1) {
+      perror("failed to create the fork.");
+      return;
+    }
+
+    if (pid == 0) {
+      execv(resolved_path, args);
+      perror("execv failed");
+      exit(1);
+    } else {
+      int status;
+      waitpid(pid, &status, 0);
+    }
+  } else {
+    printf("%s: command not found\n", program);
   }
 }
