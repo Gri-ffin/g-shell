@@ -46,8 +46,10 @@ int main(int argc, char *argv[]) {
       handle_echo(args);
     } else if (strcmp(cmd, "type") == 0) {
       handle_type(args[1]);
-    } else if (strcmp(cmd, "pwd")) {
+    } else if (strcmp(cmd, "pwd") == 0) {
       handle_pwd();
+    } else if (strcmp(cmd, "cd") == 0) {
+      handle_cd(args[1]);
     } else {
       run_program(cmd, args);
     }

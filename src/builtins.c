@@ -1,5 +1,6 @@
 #include "builtins.h"
 #include "path.h"
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,26 @@ void handle_pwd() {
   if (getcwd(cwd, sizeof(cwd)) != NULL) {
     printf("%s\n", cwd);
   } else {
-    perror("cannot get working directory\n");
+    perror("pwd failed\n");
+  }
+}
+
+void handle_cd(const char *path) {
+  if (path == NULL) {
+    printf("cd: missing argument\n");
+    return;
+  }
+
+  switch (path[0]) {
+  case '/':
+    if (chdir(path) == -1) {
+      printf("cd: %s: %s\n", path, strerror(errno));
+      return;
+    }
+    return;
+  default:
+    printf("Invalid directory %s\n", path);
+    return;
   }
 }
 
