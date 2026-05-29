@@ -49,20 +49,22 @@ void handle_pwd() {
 }
 
 void handle_cd(const char *path) {
-  if (path == NULL) {
-    printf("cd: missing argument\n");
+  if (path == NULL || strcmp(path, "~") == 0) {
+    const char *home = getenv("HOME");
+
+    if (home == NULL) {
+      fprintf(stderr, "cd: environment variable home not set.\n");
+      return;
+    }
+
+    if (chdir(home) == -1) {
+      perror("cd");
+    }
     return;
   }
 
-  switch (path[0]) {
-  case '/':
-    if (chdir(path) == -1) {
-      printf("cd: %s: %s\n", path, strerror(errno));
-      return;
-    }
-    return;
-  default:
-    printf("Invalid directory %s\n", path);
+  if (chdir(path) == -1) {
+    printf("cd: %s: %s\n", path, strerror(errno));
     return;
   }
 }
