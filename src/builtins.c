@@ -38,12 +38,21 @@ void handle_type(char *arg) {
   }
 }
 
+void handle_pwd() {
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    printf("%s\n", cwd);
+  } else {
+    perror("cannot get working directory\n");
+  }
+}
+
 void run_program(const char *program, char **args) {
   char resolved_path[PATH_MAX];
   if (resolve_path(program, resolved_path, sizeof(resolved_path))) {
     pid_t pid = fork();
     if (pid == -1) {
-      perror("failed to create the fork.");
+      perror("failed to create the fork");
       return;
     }
 
