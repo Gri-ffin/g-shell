@@ -1,5 +1,5 @@
 #include "builtins.h"
-#include "externals.h"
+#include "path.h"
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
