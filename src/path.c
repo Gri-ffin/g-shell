@@ -1,4 +1,4 @@
-#include "externals.h"
+#include "path.h"
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
