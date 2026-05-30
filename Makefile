@@ -4,7 +4,7 @@ TARGET = myshell
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/builtins.c $(SRC_DIR)/externals.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/builtins.c $(SRC_DIR)/path.c
 OBJS = $(SRCS:.c=.o)
 
 HEADERS = $(SRC_DIR)/builtins.h $(SRC_DIR)/path.h
