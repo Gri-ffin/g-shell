@@ -29,6 +29,15 @@ int parse_input(char *input, char **args) {
         start_arg = ptr;
       }
       continue;
+    } else if (*ptr == '\\' && !inside_double_quotes && !inside_single_quotes) {
+      memmove(ptr, ptr + 1, strlen(ptr));
+      if (*ptr != '\0') {
+        if (!start_arg) {
+          start_arg = ptr;
+        }
+        ptr++;
+      }
+      continue;
     }
 
     if (*ptr == ' ' && !inside_single_quotes && !inside_double_quotes) {
