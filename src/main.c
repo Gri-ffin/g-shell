@@ -8,14 +8,22 @@
 #define MAX_ARGS 64
 
 int parse_input(char *input, char **args) {
-  bool inside_quotes = false;
+  bool inside_single_quotes = false;
+  bool inside_double_quotes = false;
   char *start_arg = NULL;
   char *ptr = input;
   int arg_count = 0;
 
   while (*ptr != '\0') {
     if (*ptr == '\'') {
-      inside_quotes = !inside_quotes;
+      inside_single_quotes = !inside_single_quotes;
+      memmove(ptr, ptr + 1, strlen(ptr));
+      if (!start_arg) {
+        start_arg = ptr;
+      }
+      continue;
+    } else if (*ptr == '"') {
+      inside_double_quotes = !inside_double_quotes;
       memmove(ptr, ptr + 1, strlen(ptr));
       if (!start_arg) {
         start_arg = ptr;
@@ -23,7 +31,7 @@ int parse_input(char *input, char **args) {
       continue;
     }
 
-    if (*ptr == ' ' && !inside_quotes) {
+    if (*ptr == ' ' && !inside_single_quotes && !inside_double_quotes) {
       if (start_arg) {
         *ptr = '\0';
         args[arg_count++] = start_arg;
@@ -35,6 +43,11 @@ int parse_input(char *input, char **args) {
       }
     }
     ptr++;
+  }
+
+  if (inside_double_quotes || inside_single_quotes) {
+    fprintf(stderr, "syntax error: unterminated quote\n");
+    return 0;
   }
 
   if (start_arg) {
