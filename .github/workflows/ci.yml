@@ -1,0 +1,28 @@
+name: Shell Regression Tests
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Compile Shell with Make
+        run: |
+          make clean
+          make
+
+      - name: Run Python Tests
+        run: python test_shell.py
