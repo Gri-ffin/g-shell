@@ -7,6 +7,43 @@
 
 #define MAX_ARGS 64
 
+int parse_input(char *input, char **args) {
+  bool inside_quotes = false;
+  char *start_arg = NULL;
+  char *ptr = input;
+  int arg_count = 0;
+
+  while (*ptr != '\0') {
+    if (*ptr == '\'') {
+      inside_quotes = !inside_quotes;
+      memmove(ptr, ptr + 1, strlen(ptr));
+      if (!start_arg) {
+        start_arg = ptr;
+      }
+      continue;
+    }
+
+    if (*ptr == ' ' && !inside_quotes) {
+      if (start_arg) {
+        *ptr = '\0';
+        args[arg_count++] = start_arg;
+        start_arg = NULL;
+      }
+    } else {
+      if (!start_arg) {
+        start_arg = ptr;
+      }
+    }
+    ptr++;
+  }
+
+  if (start_arg) {
+    args[arg_count++] = start_arg;
+  }
+  args[arg_count] = NULL;
+  return arg_count;
+}
+
 int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
   char *input = NULL;
@@ -25,18 +62,10 @@ int main(int argc, char *argv[]) {
     input[strcspn(input, "\n")] = '\0';
 
     char *args[MAX_ARGS];
-    int arg_count = 0;
 
-    char *token = strtok(input, " ");
-    while (token != NULL && arg_count < MAX_ARGS - 1) {
-      args[arg_count++] = token;
-      token = strtok(NULL, " ");
-    }
-    args[arg_count] = NULL; // null terminate the args
-
-    if (arg_count == 0) {
+    int arg_count = parse_input(input, args);
+    if (arg_count == 0)
       continue;
-    }
 
     char *cmd = args[0];
 
