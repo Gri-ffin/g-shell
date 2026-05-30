@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import getpass
 
 SHELL_BINARY = "./myshell"
 
@@ -63,7 +64,7 @@ tests = [
     {
         "name": "System: External Command Execution",
         "input": "whoami\n",
-        "expected_lines": [os.getlogin() if hasattr(os, 'getlogin') else os.environ.get('USER', '')],
+        "expected_lines": [getpass.getuser()],
         "expected_stderr": ""
     }
 ]
