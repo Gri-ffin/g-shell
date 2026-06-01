@@ -9,14 +9,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void handle_echo(char **args) {
+void handle_echo(char **args, int fd) {
   for (int i = 1; args[i] != NULL; i++) {
-    printf("%s", args[i]);
+    dprintf(fd, "%s", args[i]);
     if (args[i + 1] != NULL) {
-      printf(" ");
+      dprintf(fd, " ");
     }
   }
-  printf("\n");
+  dprintf(fd, "\n");
 }
 
 void handle_type(char *arg) {
