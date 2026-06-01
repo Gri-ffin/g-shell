@@ -35,18 +35,21 @@ int main(int argc, char *argv[]) {
     char *cmd = args[0];
     int fd = check_and_handle_redirection(args);
 
+    if (fd == -1)
+      continue;
+
     if (strcmp(cmd, "exit") == 0) {
       exit(0);
     } else if (strcmp(cmd, "echo") == 0) {
       handle_echo(args, fd);
     } else if (strcmp(cmd, "type") == 0) {
-      handle_type(args[1]);
+      handle_type(args[1], fd);
     } else if (strcmp(cmd, "pwd") == 0) {
-      handle_pwd();
+      handle_pwd(fd);
     } else if (strcmp(cmd, "cd") == 0) {
       handle_cd(args[1]);
     } else {
-      run_program(cmd, args);
+      run_program(cmd, args, fd);
     }
     if (fd != 1)
       close(fd);

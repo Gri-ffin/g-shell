@@ -19,30 +19,30 @@ void handle_echo(char **args, int fd) {
   dprintf(fd, "\n");
 }
 
-void handle_type(char *arg) {
+void handle_type(char *arg, int fd) {
   if (arg == NULL) {
-    printf("type: missing argument\n");
+    dprintf(fd, "type: missing argument\n");
     return;
   }
 
   if (strcmp(arg, "echo") == 0 || strcmp(arg, "exit") == 0 ||
       strcmp(arg, "type") == 0) {
-    printf("%s is a shell builtin\n", arg);
+    dprintf(fd, "%s is a shell builtin\n", arg);
     return;
   }
 
   char resolved_path[PATH_MAX];
   if (resolve_path(arg, resolved_path, sizeof(resolved_path))) {
-    printf("%s is %s\n", arg, resolved_path);
+    dprintf(fd, "%s is %s\n", arg, resolved_path);
   } else {
-    printf("%s: not found\n", arg);
+    dprintf(fd, "%s: not found\n", arg);
   }
 }
 
-void handle_pwd() {
+void handle_pwd(int fd) {
   char cwd[PATH_MAX];
   if (getcwd(cwd, sizeof(cwd)) != NULL) {
-    printf("%s\n", cwd);
+    dprintf(fd, "%s\n", cwd);
   } else {
     perror("pwd failed\n");
   }
@@ -69,7 +69,7 @@ void handle_cd(const char *path) {
   }
 }
 
-void run_program(const char *program, char **args) {
+void run_program(const char *program, char **args, int fd) {
   char resolved_path[PATH_MAX];
   if (resolve_path(program, resolved_path, sizeof(resolved_path))) {
     pid_t pid = fork();
@@ -79,6 +79,10 @@ void run_program(const char *program, char **args) {
     }
 
     if (pid == 0) {
+      if (fd != 1) {
+        dup2(fd, STDOUT_FILENO);
+        close(fd);
+      }
       execv(resolved_path, args);
       perror("execv failed");
       exit(1);

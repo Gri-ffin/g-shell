@@ -4,10 +4,10 @@ TARGET = myshell
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/builtins.c $(SRC_DIR)/path.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/builtins.c $(SRC_DIR)/path.c $(SRC_DIR)/parser.c
 OBJS = $(SRCS:.c=.o)
 
-HEADERS = $(SRC_DIR)/builtins.h $(SRC_DIR)/path.h
+HEADERS = $(SRC_DIR)/builtins.h $(SRC_DIR)/path.h $(SRC_DIR)/parser.h 
 
 .PHONY: all clean
 
