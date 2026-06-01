@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define STDOUT_REDIRECTION_SHORT ">"
+#define STDOUT_REDIRECTION "1>"
 
 int parse_input(char *input, char **args) {
   bool inside_single_quotes = false;
@@ -66,7 +67,8 @@ int parse_input(char *input, char **args) {
 
 int check_and_handle_redirection(char **args) {
   for (int i = 1; args[i] != NULL; i++) {
-    if (strcmp(args[i], STDOUT_REDIRECTION_SHORT) == 0) {
+    if (strcmp(args[i], STDOUT_REDIRECTION_SHORT) == 0 ||
+        strcmp(args[i], STDOUT_REDIRECTION) == 0) {
       char *filename = args[i + 1];
       if (filename == NULL) {
         fprintf(stderr, "Syntax error: expected file after '>'\n");

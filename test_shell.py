@@ -67,11 +67,11 @@ tests = [
         "expected_stderr": ""
     },
     
-    # --- NEW REDIRECTION TESTS ---
+    # --- REDIRECTION TESTS (>) ---
     {
         "name": "Redirection: Builtin echo to file",
         "input": "echo hello redirection > test_echo.txt\n",
-        "expected_lines": [],  # Output goes to file, stdout should be empty!
+        "expected_lines": [],
         "expected_stderr": "",
         "expected_file": {
             "path": "test_echo.txt",
@@ -105,6 +105,27 @@ tests = [
         "expected_stderr": "",
         "expected_file": {
             "path": "test_ext.txt",
+            "content": getpass.getuser() + "\n"
+        }
+    },
+
+    {
+        "name": "Redirection: Explicit stdout (1>) with echo",
+        "input": "echo hello explicit stdout 1> test_explicit_echo.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_explicit_echo.txt",
+            "content": "hello explicit stdout\n"
+        }
+    },
+    {
+        "name": "Redirection: Explicit stdout (1>) with external command",
+        "input": "whoami 1> test_explicit_ext.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_explicit_ext.txt",
             "content": getpass.getuser() + "\n"
         }
     }
