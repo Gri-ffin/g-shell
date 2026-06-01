@@ -5,7 +5,6 @@ import getpass
 
 SHELL_BINARY = "./myshell"
 
-# We define the clean, expected outputs WITHOUT the shell prompt fluff
 tests = [
     {
         "name": "Builtin: echo simple",
@@ -66,6 +65,48 @@ tests = [
         "input": "whoami\n",
         "expected_lines": [getpass.getuser()],
         "expected_stderr": ""
+    },
+    
+    # --- NEW REDIRECTION TESTS ---
+    {
+        "name": "Redirection: Builtin echo to file",
+        "input": "echo hello redirection > test_echo.txt\n",
+        "expected_lines": [],  # Output goes to file, stdout should be empty!
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_echo.txt",
+            "content": "hello redirection\n"
+        }
+    },
+    {
+        "name": "Redirection: The greedy token trailing argument edge case",
+        "input": "echo hello world > file.txt t.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "file.txt",
+            "content": "hello world t.txt\n"
+        }
+    },
+    {
+        "name": "Redirection: Builtin pwd to file",
+        "input": "pwd > test_pwd.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_pwd.txt",
+            "content": os.getcwd() + "\n"
+        }
+    },
+    {
+        "name": "Redirection: External program output to file",
+        "input": "whoami > test_ext.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_ext.txt",
+            "content": getpass.getuser() + "\n"
+        }
     }
 ]
 
@@ -95,17 +136,41 @@ def run_tests():
             clean_stdout = stdout.replace("$ ", "").replace("Exiting Shell...", "").strip()
             actual_lines = [line.strip() for line in clean_stdout.split("\n") if line.strip()]
 
-            # Validate lines
+            # Validate stdout lines
             stdout_match = True
             for expected in test["expected_lines"]:
-                # Check if any of the actual output lines contain or match the expected string
                 if not any(expected in actual for actual in actual_lines):
                     stdout_match = False
                     break
             
+            # Validate stderr
             stderr_match = stderr == test["expected_stderr"]
 
-            if stdout_match and stderr_match:
+            # Validate generated side-effect files (Redirection check)
+            file_match = True
+            file_error_msg = ""
+            
+            if "expected_file" in test:
+                file_info = test["expected_file"]
+                file_path = file_info["path"]
+                expected_content = file_info["content"]
+                
+                if not os.path.exists(file_path):
+                    file_match = False
+                    file_error_msg = f"Expected file '{file_path}' was never created."
+                else:
+                    with open(file_path, "r") as f:
+                        actual_content = f.read()
+                    
+                    if actual_content != expected_content:
+                        file_match = False
+                        file_error_msg = f"File content mismatch.\n     Expected: {repr(expected_content)}\n     Got:      {repr(actual_content)}"
+                    
+                    # Clean up the test file so we don't leave trash in your directory
+                    os.remove(file_path)
+
+            # Final Verdict
+            if stdout_match and stderr_match and file_match:
                 print(f"✅ PASSED: {test['name']}")
                 passed += 1
             else:
@@ -117,6 +182,8 @@ def run_tests():
                 if not stderr_match:
                     print(f"   Expected stderr: {repr(test['expected_stderr'])}")
                     print(f"   Got stderr:      {repr(stderr)}")
+                if not file_match:
+                    print(f"   File Error:      {file_error_msg}")
                 failed += 1
 
         except subprocess.TimeoutExpired:
