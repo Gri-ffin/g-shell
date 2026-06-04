@@ -2,6 +2,7 @@
 #include "path.h"
 #include <errno.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@ void handle_type(char *arg, int fd) {
     return;
   }
 
-  for (int i = 0; i < sizeof(builtins) / sizeof(builtins[0]); i++) {
+  for (size_t i = 0; i < sizeof(builtins) / sizeof(builtins[0]); i++) {
     if (strcmp(builtins[i], arg) == 0) {
       dprintf(fd, "%s is a shell builtin\n", arg);
       return;
