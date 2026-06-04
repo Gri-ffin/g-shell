@@ -32,11 +32,25 @@ int main(int argc, char *argv[]) {
     if (arg_count == 0)
       continue;
 
+    // guard against overflow
+    if (arg_count >= MAX_ARGS - 1) {
+      fprintf(stderr, "too many arguments\n");
+      return 0;
+    }
+
     char *cmd = args[0];
-    int fd = check_and_handle_redirection(args);
+    int target_fd = STDOUT_FILENO;
+    int fd = check_and_handle_redirection(args, &target_fd);
 
     if (fd == -1)
       continue;
+
+    int saved_stderr = -1;
+    // don't overwrite the program main stderr
+    if (target_fd == STDERR_FILENO) {
+      saved_stderr = dup(STDERR_FILENO);
+      dup2(fd, STDERR_FILENO);
+    }
 
     if (strcmp(cmd, "exit") == 0) {
       exit(0);
@@ -51,7 +65,13 @@ int main(int argc, char *argv[]) {
     } else {
       run_program(cmd, args, fd);
     }
-    if (fd != 1)
+
+    // restore the main stderr
+    if (saved_stderr != -1) {
+      dup2(saved_stderr, STDERR_FILENO);
+      close(saved_stderr);
+    }
+    if (fd != STDOUT_FILENO)
       close(fd);
   }
 
