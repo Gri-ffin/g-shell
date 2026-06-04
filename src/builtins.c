@@ -64,7 +64,7 @@ void handle_cd(const char *path) {
   }
 
   if (chdir(path) == -1) {
-    printf("cd: %s: %s\n", path, strerror(errno));
+    fprintf(stderr, "cd: %s: %s\n", path, strerror(errno));
     return;
   }
 }
@@ -79,7 +79,7 @@ void run_program(const char *program, char **args, int fd) {
     }
 
     if (pid == 0) {
-      if (fd != 1) {
+      if (fd != STDOUT_FILENO) {
         dup2(fd, STDOUT_FILENO);
         close(fd);
       }
