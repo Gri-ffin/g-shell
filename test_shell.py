@@ -3,7 +3,7 @@ import os
 import sys
 import getpass
 
-SHELL_BINARY = "./myshell"
+SHELL_BINARY = "./shell"
 
 tests = [
     {
@@ -26,14 +26,26 @@ tests = [
     },
     {
         "name": "Builtin: type for builtins",
-        "input": "type echo\ntype exit\n",
-        "expected_lines": ["echo is a shell builtin", "exit is a shell builtin"],
+        "input": "type echo\ntype exit\ntype pwd\ntype cd\ntype type\n",
+        "expected_lines": [
+            "echo is a shell builtin",
+            "exit is a shell builtin",
+            "pwd is a shell builtin",
+            "cd is a shell builtin",
+            "type is a shell builtin"
+        ],
         "expected_stderr": ""
     },
     {
         "name": "Builtin: type for external command",
         "input": "type ls\n",
         "expected_lines": ["ls is "],  # Soft match: just ensures it resolves the path
+        "expected_stderr": ""
+    },
+    {
+        "name": "Builtin: type for unknown command",
+        "input": "type fakecommand\n",
+        "expected_lines": ["fakecommand: not found"],
         "expected_stderr": ""
     },
     {
@@ -49,9 +61,27 @@ tests = [
         "expected_stderr": ""
     },
     {
+        "name": "Builtin: cd home with tilde",
+        "input": "cd ~\npwd\n",
+        "expected_lines": [os.path.expanduser("~")],
+        "expected_stderr": ""
+    },
+    {
+        "name": "Builtin: cd invalid path",
+        "input": "cd /nonexistent_dir_xyz\n",
+        "expected_lines": [],
+        "expected_stderr": "cd: /nonexistent_dir_xyz: No such file or directory\n"
+    },
+    {
         "name": "Parser: Unterminated Single Quote Error",
         "input": "echo 'broken quote\n",
-        "expected_lines": [], 
+        "expected_lines": [],
+        "expected_stderr": "syntax error: unterminated quote\n"
+    },
+    {
+        "name": "Parser: Unterminated Double Quote Error",
+        "input": "echo \"broken quote\n",
+        "expected_lines": [],
         "expected_stderr": "syntax error: unterminated quote\n"
     },
     {
@@ -61,13 +91,25 @@ tests = [
         "expected_stderr": ""
     },
     {
+        "name": "Parser: Empty input",
+        "input": "\n",
+        "expected_lines": [],
+        "expected_stderr": ""
+    },
+    {
         "name": "System: External Command Execution",
         "input": "whoami\n",
         "expected_lines": [getpass.getuser()],
         "expected_stderr": ""
     },
-    
-    # --- REDIRECTION TESTS (>) ---
+    {
+        "name": "System: Unknown command error",
+        "input": "fakecommand_xyz\n",
+        "expected_lines": ["fakecommand_xyz: command not found"],
+        "expected_stderr": ""
+    },
+
+    # --- STDOUT REDIRECTION TESTS (> and 1>) ---
     {
         "name": "Redirection: Builtin echo to file",
         "input": "echo hello redirection > test_echo.txt\n",
@@ -76,16 +118,6 @@ tests = [
         "expected_file": {
             "path": "test_echo.txt",
             "content": "hello redirection\n"
-        }
-    },
-    {
-        "name": "Redirection: The greedy token trailing argument edge case",
-        "input": "echo hello world > file.txt t.txt\n",
-        "expected_lines": [],
-        "expected_stderr": "",
-        "expected_file": {
-            "path": "file.txt",
-            "content": "hello world t.txt\n"
         }
     },
     {
@@ -108,7 +140,6 @@ tests = [
             "content": getpass.getuser() + "\n"
         }
     },
-
     {
         "name": "Redirection: Explicit stdout (1>) with echo",
         "input": "echo hello explicit stdout 1> test_explicit_echo.txt\n",
@@ -128,8 +159,43 @@ tests = [
             "path": "test_explicit_ext.txt",
             "content": getpass.getuser() + "\n"
         }
-    }
+    },
+    {
+        # Verifies that only the first redirection token is consumed;
+        # remaining tokens are passed as echo arguments
+        "name": "Redirection: Greedy token trailing argument edge case",
+        "input": "echo hello world > file.txt t.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "file.txt",
+            "content": "hello world t.txt\n"
+        }
+    },
+
+    # --- STDERR REDIRECTION TESTS (2>) ---
+    {
+        "name": "Redirection: stderr (2>) to file on bad cd",
+        "input": "cd /nonexistent_dir_xyz 2> test_stderr.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_stderr.txt",
+            "content": "cd: /nonexistent_dir_xyz: No such file or directory\n"
+        }
+    },
+    {
+        "name": "Redirection: stderr (2>) to file on unknown command",
+        "input": "fakecommand_xyz 2> test_stderr_cmd.txt\n",
+        "expected_lines": ["fakecommand_xyz: command not found"],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_stderr_cmd.txt",
+            "content": ""
+        }
+    },
 ]
+
 
 def run_tests():
     if not os.path.exists(SHELL_BINARY):
@@ -139,7 +205,7 @@ def run_tests():
     passed = 0
     failed = 0
 
-    print("🚀 Starting Smart Shell Regression Tests...\n" + "="*50)
+    print("🚀 Starting Smart Shell Regression Tests...\n" + "=" * 50)
 
     for test in tests:
         process = subprocess.Popen(
@@ -152,7 +218,7 @@ def run_tests():
 
         try:
             stdout, stderr = process.communicate(input=test["input"], timeout=2)
-            
+
             # Clean up stdout: remove prompt markers, exit text, and trailing empty space
             clean_stdout = stdout.replace("$ ", "").replace("Exiting Shell...", "").strip()
             actual_lines = [line.strip() for line in clean_stdout.split("\n") if line.strip()]
@@ -163,31 +229,37 @@ def run_tests():
                 if not any(expected in actual for actual in actual_lines):
                     stdout_match = False
                     break
-            
+
             # Validate stderr
             stderr_match = stderr == test["expected_stderr"]
 
             # Validate generated side-effect files (Redirection check)
             file_match = True
             file_error_msg = ""
-            
+
             if "expected_file" in test:
                 file_info = test["expected_file"]
                 file_path = file_info["path"]
                 expected_content = file_info["content"]
-                
-                if not os.path.exists(file_path):
+
+                if expected_content == "" and not os.path.exists(file_path):
+                    # Empty content + no file is acceptable
+                    pass
+                elif not os.path.exists(file_path):
                     file_match = False
                     file_error_msg = f"Expected file '{file_path}' was never created."
                 else:
                     with open(file_path, "r") as f:
                         actual_content = f.read()
-                    
+
                     if actual_content != expected_content:
                         file_match = False
-                        file_error_msg = f"File content mismatch.\n     Expected: {repr(expected_content)}\n     Got:      {repr(actual_content)}"
-                    
-                    # Clean up the test file so we don't leave trash in your directory
+                        file_error_msg = (
+                            f"File content mismatch.\n"
+                            f"     Expected: {repr(expected_content)}\n"
+                            f"     Got:      {repr(actual_content)}"
+                        )
+
                     os.remove(file_path)
 
             # Final Verdict
@@ -216,6 +288,7 @@ def run_tests():
     print(f"\n📊 Summary: {passed} passed, {failed} failed.")
     if failed > 0:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     run_tests()
