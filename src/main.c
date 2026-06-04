@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     // guard against overflow
     if (arg_count >= MAX_ARGS - 1) {
       fprintf(stderr, "too many arguments\n");
-      return 0;
+      continue;
     }
 
     char *cmd = args[0];

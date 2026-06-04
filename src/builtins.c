@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+char *builtins[] = {"echo", "exit", "type", "cd", "pwd"};
+
 void handle_echo(char **args, int fd) {
   for (int i = 1; args[i] != NULL; i++) {
     dprintf(fd, "%s", args[i]);
@@ -25,10 +27,11 @@ void handle_type(char *arg, int fd) {
     return;
   }
 
-  if (strcmp(arg, "echo") == 0 || strcmp(arg, "exit") == 0 ||
-      strcmp(arg, "type") == 0) {
-    dprintf(fd, "%s is a shell builtin\n", arg);
-    return;
+  for (int i = 0; i < sizeof(builtins) / sizeof(builtins[0]); i++) {
+    if (strcmp(builtins[i], arg) == 0) {
+      dprintf(fd, "%s is a shell builtin\n", arg);
+      return;
+    }
   }
 
   char resolved_path[PATH_MAX];
