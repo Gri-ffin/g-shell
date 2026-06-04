@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
-TARGET = myshell
+TARGET = shell 
 
 SRC_DIR = src
 
