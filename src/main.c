@@ -11,6 +11,7 @@
 
 int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
+  system("clear");
   char *input = NULL;
   size_t cap = 0;
   ssize_t len;
