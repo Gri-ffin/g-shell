@@ -57,3 +57,9 @@ vcpkg_installed
 # Exec file
 myshell
 shell
+
+# Intellij
+.idea
+
+# MacOS
+.DS_Store
