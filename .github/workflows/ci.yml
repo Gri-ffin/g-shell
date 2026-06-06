@@ -25,4 +25,6 @@ jobs:
           make
 
       - name: Run Python Tests
+        env:
+          TERM: xterm
         run: python test_shell.py
