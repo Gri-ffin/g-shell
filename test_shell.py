@@ -194,6 +194,26 @@ tests = [
             "content": ""
         }
     },
+    {
+        "name": "Redirection: Append short (>>)",
+        "input": "echo first line > test_append.txt\necho second line >> test_append.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_append.txt",
+            "content": "first line\nsecond line\n"
+        }
+    },
+    {
+        "name": "Redirection: Append explicit stdout (1>>)",
+        "input": "echo stream one 1> test_append_explicit.txt\necho stream two 1>> test_append_explicit.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_append_explicit.txt",
+            "content": "stream one\nstream two\n"
+        }
+    },
 ]
 
 
