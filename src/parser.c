@@ -88,8 +88,8 @@ int parse_input(char *input, char **args) {
 
 // handle fd and stdout or stderr output
 // return -1 on skip, on error `FILE_ERROR`
-int parse_redirection(const char *arg, int *target_fd, const char *filename) {
-    *target_fd = STDOUT_FILENO;
+int parse_redirection(const char *arg, int *target_stream, const char *filename) {
+    *target_stream = STDOUT_FILENO;
 
     const bool is_stdout = (strcmp(arg, STDOUT_REDIRECTION) == 0 ||
                             strcmp(arg, STDOUT_REDIRECTION_SHORT) == 0 ||
@@ -103,9 +103,9 @@ int parse_redirection(const char *arg, int *target_fd, const char *filename) {
 
     if (is_stdout || is_stderr) {
         if (is_stdout)
-            *target_fd = STDOUT_FILENO;
+            *target_stream = STDOUT_FILENO;
         else
-            *target_fd = STDERR_FILENO;
+            *target_stream = STDERR_FILENO;
 
         if (filename == NULL) {
             fprintf(stderr, "Shell error: No syntax file specified\n");
@@ -130,9 +130,9 @@ int parse_redirection(const char *arg, int *target_fd, const char *filename) {
 }
 
 // checks if there is any redirection involved like '>' or '>>'
-int check_and_handle_redirection(char **args, int *target_fd) {
+int check_and_handle_redirection(char **args, int *target_stream) {
     for (int i = 1; args[i] != NULL; i++) {
-        const int fd = parse_redirection(args[i], target_fd, args[i + 1]);
+        const int fd = parse_redirection(args[i], target_stream, args[i + 1]);
         // if file error return REDIRECT_ERROR
         if (fd == FILE_ERROR)
             return REDIRECT_ERROR;
