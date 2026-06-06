@@ -9,6 +9,7 @@
 #define STDERR_REDIRECTION "2>"
 #define STDOUT_APPEND_REDIRECTION_SHORT ">>"
 #define STDOUT_APPEND_REDIRECTION "1>>"
+#define STDERR_APPEND_REDIRECTION "2>>"
 #define FILE_ERROR (-2)
 #define NO_REDIRECTION (-1)
 #define REDIRECT_ERROR (-1)
@@ -91,15 +92,16 @@ int parse_input(char *input, char **args) {
 int parse_redirection(const char *arg, int *target_stream, const char *filename) {
     *target_stream = STDOUT_FILENO;
 
-    const bool is_stdout = (strcmp(arg, STDOUT_REDIRECTION) == 0 ||
-                            strcmp(arg, STDOUT_REDIRECTION_SHORT) == 0 ||
-                            strcmp(arg, STDOUT_APPEND_REDIRECTION_SHORT) == 0 ||
-                            strcmp(arg, STDOUT_APPEND_REDIRECTION) == 0);
+    const bool is_stdout = strcmp(arg, STDOUT_REDIRECTION) == 0 ||
+                           strcmp(arg, STDOUT_REDIRECTION_SHORT) == 0 ||
+                           strcmp(arg, STDOUT_APPEND_REDIRECTION_SHORT) == 0 ||
+                           strcmp(arg, STDOUT_APPEND_REDIRECTION) == 0;
 
-    const bool is_stderr = (strcmp(arg, STDERR_REDIRECTION) == 0);
+    const bool is_stderr = strcmp(arg, STDERR_REDIRECTION) == 0 || strcmp(arg, STDERR_APPEND_REDIRECTION) == 0;
 
-    const bool is_append = (strcmp(arg, STDOUT_APPEND_REDIRECTION) == 0 ||
-                            strcmp(arg, STDOUT_APPEND_REDIRECTION_SHORT) == 0);
+    const bool is_append = strcmp(arg, STDOUT_APPEND_REDIRECTION) == 0 ||
+                           strcmp(arg, STDOUT_APPEND_REDIRECTION_SHORT) == 0 ||
+                           strcmp(arg, STDERR_APPEND_REDIRECTION) == 0;
 
     if (is_stdout || is_stderr) {
         if (is_stdout)
