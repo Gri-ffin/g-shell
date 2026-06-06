@@ -214,6 +214,16 @@ tests = [
             "content": "stream one\nstream two\n"
         }
     },
+    {
+        "name": "Redirection: Append explicit stderr (2>>)",
+        "input": "ls nonexistent_file 2>> test_append_explicit_stderr.txt\nls another_nonexistent_file 2>> test_append_explicit_stderr.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_append_explicit_stderr.txt",
+            "content": "ls: nonexistent_file: No such file or directory\nls: another_nonexistent_file: No such file or directory\n"
+        }
+    }
 ]
 
 
