@@ -2,9 +2,9 @@ name: Shell Regression Tests
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: ["main", "master"]
+    branches: [ "main", "master" ]
 
 jobs:
   build-and-test:
@@ -28,3 +28,8 @@ jobs:
         env:
           TERM: xterm
         run: python test_shell.py
+
+      - name: Run Autocompletion Tests
+        env:
+          TERM: xterm
+        run: python test_autocompletion.py

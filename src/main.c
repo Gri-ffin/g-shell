@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "builtins/builtins.h"
 #include "parser.h"
 #include "path.h"
 #include <stdbool.h>
@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <readline/readline.h>
+#include "builtins/autocompletion.h"
 
 #define MAX_ARGS 64
 
@@ -13,28 +15,27 @@ int main(int argc, char *argv[]) {
     setbuf(stdout, NULL);
     system("clear");
     char *input = NULL;
-    size_t cap = 0;
+
+    rl_attempted_completion_function = shell_completion;
 
     while (true) {
-        printf("$ ");
+        input = readline("$ ");
 
-        const ssize_t len = getline(&input, &cap, stdin);
-        if (len == -1) {
-            printf("Exiting Shell...\n");
+        if (input == NULL) {
             break;
         }
 
-        input[strcspn(input, "\n")] = '\0';
-
         char *args[MAX_ARGS];
-
         const int arg_count = parse_input(input, args);
-        if (arg_count == 0)
+        if (arg_count == 0) {
+            free(input);
             continue;
+        }
 
         // guard against overflow
         if (arg_count >= MAX_ARGS - 1) {
             fprintf(stderr, "too many arguments\n");
+            free(input);
             continue;
         }
 
@@ -43,8 +44,10 @@ int main(int argc, char *argv[]) {
         const int fd = check_and_handle_redirection(args, &target_stream);
 
         // if we encountered an error
-        if (fd == -1)
+        if (fd == -1) {
+            free(input);
             continue;
+        }
 
         int saved_stderr = -1;
         // don't overwrite the program main stderr
@@ -55,6 +58,7 @@ int main(int argc, char *argv[]) {
 
         const int pass_fd = (target_stream == STDOUT_FILENO) ? fd : STDOUT_FILENO;
         if (strcmp(cmd, "exit") == 0) {
+            free(input);
             exit(0);
         }
         if (strcmp(cmd, "echo") == 0) {
@@ -77,8 +81,9 @@ int main(int argc, char *argv[]) {
         // don't accidentally close the main streams
         if (fd != STDOUT_FILENO && fd != STDERR_FILENO)
             close(fd);
+
+        free(input);
     }
 
-    free(input);
     return 0;
 }

@@ -1,5 +1,5 @@
 #include "builtins.h"
-#include "path.h"
+#include "../path.h"
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-char *builtins[] = {"echo", "exit", "type", "cd", "pwd"};
+char *builtins[] = {"type", "echo", "pwd", "cd", "exit", NULL};
 
 // The `echo` builtin command
 void handle_echo(char **args, const int fd) {
@@ -25,16 +25,18 @@ void handle_echo(char **args, const int fd) {
 
 // The `type` builtin command
 void handle_type(char *arg, const int fd) {
+    int i = 0;
     if (arg == NULL) {
         dprintf(fd, "type: missing argument\n");
         return;
     }
 
-    for (size_t i = 0; i < sizeof(builtins) / sizeof(builtins[0]); i++) {
+    while (builtins[i] != NULL) {
         if (strcmp(builtins[i], arg) == 0) {
             dprintf(fd, "%s is a shell builtin\n", arg);
             return;
         }
+        i++;
     }
 
     char resolved_path[PATH_MAX];
