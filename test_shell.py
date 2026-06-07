@@ -2,8 +2,14 @@ import subprocess
 import os
 import sys
 import getpass
+import platform
 
 SHELL_BINARY = "./shell"
+
+is_linux = platform.system() == "Linux"
+
+linux_expected = "ls: cannot access 'nonexistent_file': No such file or directory\nls: cannot access 'another_nonexistent_file': No such file or directory\n"
+mac_expected = "ls: nonexistent_file: No such file or directory\nls: another_nonexistent_file: No such file or directory\n"
 
 tests = [
     {
@@ -221,7 +227,7 @@ tests = [
         "expected_stderr": "",
         "expected_file": {
             "path": "test_append_explicit_stderr.txt",
-            "content": "ls: nonexistent_file: No such file or directory\nls: another_nonexistent_file: No such file or directory\n"
+            "content": linux_expected if is_linux else mac_expected
         }
     }
 ]
