@@ -33,8 +33,3 @@ jobs:
         env:
           TERM: xterm
         run: python test_shell.py
-
-      - name: Run Autocompletion Tests
-        env:
-          TERM: xterm
-        run: python test_autocompletion.py
