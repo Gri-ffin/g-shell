@@ -1,7 +1,21 @@
 #include "autocompletion.h"
+
+#include <stdlib.h>
+
 #include "builtins.h"
 #include <string.h>
+#include <unistd.h>
 #include <readline/readline.h>
+
+const char *insults[] = {
+    "(⌐■_■) El Psy Kongroo... The Organization erased that command.",
+    "(ಠ_ಠ) Get in the robot, because that command doesn't exist.",
+    "( ‾ʖ̫‾) You thought it was a valid command, but it was me, DIO!",
+    "(╬ Ò ‸ Ó) Omae wa mou shindeiru. (That command is already dead.)",
+    "¯\\_(ツ)_/¯ Equivalent exchange failed. Command not found.",
+    "(ノಠ益ಠ)ノ Its syntax error level is OVER 9000!",
+    "Present day... Present time... Command not found in the Wired."
+};
 
 // Readline calls this repeatedly. It must return a malloc'd string for each match,
 // and NULL when there are no more matches left.
@@ -38,6 +52,17 @@ char **shell_completion(const char *text, const int start, int end) {
     // We only want to autocomplete builtins if the text is at the start of the line (start == 0)
     if (start == 0) {
         matches = rl_completion_matches(text, builtin_generator);
+        if (matches == NULL) {
+            const int num_insults = sizeof(insults) / sizeof(insults[0]);
+            const int random_index = rand() % num_insults;
+
+            // print the insult on a new line, then restore your prompt seamlessly
+            printf("\n%s\n", insults[random_index]);
+            rl_on_new_line();
+            rl_redisplay();
+
+            rl_attempted_completion_over = 1;
+        }
     }
 
     // Note: If matches is NULL, Readline will automatically fall back
