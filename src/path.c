@@ -9,6 +9,14 @@
 #include <sys/stat.h>
 
 #define PATH_DELIMITER ":"
+#define INITIAL_CAPACITY 10
+
+// helper function to use for the sort
+int compare(const void *a, const void *b) {
+    const char *str_a = *(const char **) a;
+    const char *str_b = *(const char **) b;
+    return strcmp(str_a, str_b);
+}
 
 bool resolve_path(const char *cmd, char *out_path, size_t max_len) {
     const char *env_path = getenv("PATH");
@@ -34,8 +42,11 @@ bool resolve_path(const char *cmd, char *out_path, size_t max_len) {
     return false;
 }
 
+// find all executables in the path, to let Readline autocomplete them
 char **resolve_executables_in_path(int *count) {
-    char **executables = NULL;
+    int capacity = INITIAL_CAPACITY;
+    char **executables = malloc(capacity * sizeof(char *));
+    if (!executables) return NULL;
     const char *env_path = getenv("PATH");
     if (env_path == NULL)
         return NULL;
@@ -57,26 +68,23 @@ char **resolve_executables_in_path(int *count) {
                     struct stat st;
                     stat(full_path, &st);
                     if (S_ISREG(st.st_mode)) {
-                        char **tmp = realloc(executables, sizeof(char *) * (*count + 1));
-                        // guard against realloc failing
-                        if (tmp == NULL) {
-                            free(executables);
-                            return NULL;
-                        }
-                        executables = tmp;
-                        // check for duplicates first, skip if any
-                        bool is_duplicate_exists = false;
-                        for (int i = 0; i < *count; i++) {
-                            if (strcmp(executables[i], entry->d_name) == 0) {
-                                is_duplicate_exists = true;
-                                break;
+                        if (*count >= capacity) {
+                            capacity *= 2;
+                            char **tmp = realloc(executables, sizeof(char *) * capacity);
+                            // guard against realloc failing
+                            if (tmp == NULL) {
+                                for (int i = 0; i < *count; i++) {
+                                    free(executables[i]);
+                                }
+                                free(executables);
+                                return NULL;
                             }
+                            executables = tmp;
                         }
-                        // if no duplicates, get only the program name
-                        if (!is_duplicate_exists) {
-                            executables[*count] = strdup(entry->d_name);
-                            (*count)++;
-                        }
+                        // naively add duplicates for now, we will remove them later
+                        // if we try to check duplicates its O(N^2)
+                        executables[*count] = strdup(entry->d_name);
+                        (*count)++;
                     }
                 }
             }
@@ -85,5 +93,21 @@ char **resolve_executables_in_path(int *count) {
         token = strtok(NULL, PATH_DELIMITER);
     }
     free(path_copy);
+
+    // Now clean the duplicates
+    qsort(executables, *count, sizeof(char *), compare);
+    int unique = 1;
+
+    for (int i = 1; i < *count; i++) {
+        if (strcmp(executables[i], executables[i - 1]) == 0) {
+            free(executables[i]); // duplicate
+        } else {
+            executables[unique++] = executables[i];
+        }
+    }
+
+    *count = unique;
+    executables[*count] = NULL;
+
     return executables;
 }

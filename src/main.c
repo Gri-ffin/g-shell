@@ -8,12 +8,11 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include "builtins/autocompletion.h"
-
-#define MAX_ARGS 64
+#include "command.h"
 
 int main(int argc, char *argv[]) {
     setbuf(stdout, NULL);
-    system("clear");
+    printf("\033[H\033[2J");
     char *input = NULL;
 
     rl_attempted_completion_function = shell_completion;
@@ -25,62 +24,57 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        char *args[MAX_ARGS];
-        const int arg_count = parse_input(input, args);
-        if (arg_count == 0) {
+        Command cmd = parse_command(input);
+        if (cmd.arg_count == 0) {
             free(input);
             continue;
         }
 
         // guard against overflow
-        if (arg_count >= MAX_ARGS - 1) {
+        if (cmd.arg_count >= MAX_ARGS - 1) {
             fprintf(stderr, "too many arguments\n");
             free(input);
             continue;
         }
 
-        const char *cmd = args[0];
-        int target_stream = STDOUT_FILENO;
-        const int fd = check_and_handle_redirection(args, &target_stream);
-
-        // if we encountered an error
-        if (fd == -1) {
-            free(input);
-            continue;
+        if (cmd.fd_out != STDOUT_FILENO) {
+            cmd.saved_stdout = dup(STDOUT_FILENO);
+            dup2(cmd.fd_out, STDOUT_FILENO);
         }
 
-        int saved_stderr = -1;
-        // don't overwrite the program main stderr
-        if (target_stream == STDERR_FILENO) {
-            saved_stderr = dup(STDERR_FILENO);
-            dup2(fd, STDERR_FILENO);
+        if (cmd.fd_err != STDERR_FILENO) {
+            cmd.saved_stderr = dup(STDERR_FILENO);
+            dup2(cmd.fd_err, STDERR_FILENO);
         }
 
-        const int pass_fd = (target_stream == STDOUT_FILENO) ? fd : STDOUT_FILENO;
-        if (strcmp(cmd, "exit") == 0) {
+        if (strcmp(cmd.cmd, "exit") == 0) {
             free(input);
             exit(0);
         }
-        if (strcmp(cmd, "echo") == 0) {
-            handle_echo(args, pass_fd);
-        } else if (strcmp(cmd, "type") == 0) {
-            handle_type(args[1], pass_fd);
-        } else if (strcmp(cmd, "pwd") == 0) {
-            handle_pwd(pass_fd);
-        } else if (strcmp(cmd, "cd") == 0) {
-            handle_cd(args[1]);
+        if (strcmp(cmd.cmd, "echo") == 0) {
+            handle_echo(cmd.args, STDOUT_FILENO);
+        } else if (strcmp(cmd.cmd, "type") == 0) {
+            handle_type(cmd.args[1], STDOUT_FILENO);
+        } else if (strcmp(cmd.cmd, "pwd") == 0) {
+            handle_pwd(STDOUT_FILENO);
+        } else if (strcmp(cmd.cmd, "cd") == 0) {
+            handle_cd(cmd.args[1]);
         } else {
-            run_program(cmd, args, pass_fd);
+            run_program(cmd.cmd, cmd.args, STDOUT_FILENO);
         }
 
-        // restore the main stderr
-        if (saved_stderr != -1) {
-            dup2(saved_stderr, STDERR_FILENO);
-            close(saved_stderr);
+        if (cmd.saved_stdout != -1) {
+            dup2(cmd.saved_stdout, STDOUT_FILENO); // Put the terminal back
+            close(cmd.saved_stdout); // Close the duplicate
+            close(cmd.fd_out); // Close the file we wrote to
         }
-        // don't accidentally close the main streams
-        if (fd != STDOUT_FILENO && fd != STDERR_FILENO)
-            close(fd);
+
+        // Restore standard error if we altered it
+        if (cmd.saved_stderr != -1) {
+            dup2(cmd.saved_stderr, STDERR_FILENO); // Put the terminal back
+            close(cmd.saved_stderr); // Close the duplicate
+            close(cmd.fd_err); // Close the file we wrote to
+        }
 
         free(input);
     }

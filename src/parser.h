@@ -1,9 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+#include "command.h"
 
-int parse_input(char *input, char **args);
-
-int check_and_handle_redirection(char **args, int *target_stream);
-
-int parse_redirection(const char *arg, int *target_stream, const char *filename);
+Command parse_command(char *input);
 #endif // PARSER_H
