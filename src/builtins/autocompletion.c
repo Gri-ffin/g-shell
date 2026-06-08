@@ -22,16 +22,14 @@ char *builtin_generator(const char *text, const int state) {
     static char **executables = NULL;
     static int count = 0;
     static int exec_index = 0;
-    char *name;
     static bool initialized = false;
 
+    // only initialize the array once
     if (!initialized) {
         executables = resolve_executables_in_path(&count);
         initialized = true;
     }
 
-    // 'state' is 0 on the first call for this completion attempt.
-    // we initialize our counters here.
     if (!state) {
         list_index = 0;
         len = strlen(text);
@@ -40,24 +38,34 @@ char *builtin_generator(const char *text, const int state) {
 
     if (executables == NULL) return NULL;
 
+    // First: yield matching builtins
+    char *name;
     // iterate through the builtins array
     while ((name = builtins[list_index])) {
         list_index++;
-
-        // check if the builtin starts with user input
         if (strncmp(text, name, len) == 0) {
             return strdup(name); // readline will free this memory
         }
     }
 
+    // Then: yield matching executables, but SKIP ones already covered by builtins
     while (exec_index < count) {
-        const char *external_program = executables[exec_index++];
-        if (strncmp(external_program, text, len) == 0) {
-            return strdup(external_program);
+        const char *ext = executables[exec_index++];
+        if (strncmp(ext, text, len) != 0)
+            continue;
+
+        // Check if this name is already in builtins
+        bool is_builtin = false;
+        for (int i = 0; builtins[i] != NULL; i++) {
+            if (strcmp(ext, builtins[i]) == 0) {
+                is_builtin = true;
+                break;
+            }
         }
+        if (!is_builtin)
+            return strdup(ext);
     }
 
-    // hit end of list
     return NULL;
 }
 
