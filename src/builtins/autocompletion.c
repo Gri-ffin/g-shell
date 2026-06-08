@@ -81,7 +81,7 @@ char **shell_completion(const char *text, const int start, int end) {
             const int num_insults = sizeof(insults) / sizeof(insults[0]);
             const int random_index = rand() % num_insults;
 
-            // print the insult on a new line, then restore your prompt seamlessly
+            // print the insult on a new line, then restore the prompt seamlessly
             printf("\n%s\n", insults[random_index]);
             rl_on_new_line();
             rl_redisplay();
