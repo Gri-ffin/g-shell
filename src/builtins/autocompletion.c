@@ -17,6 +17,13 @@ const char *insults[] = {
 };
 
 /**
+ * @brief little helper to help with binary search
+ */
+static int builtin_cmp(const void *a, const void *b) {
+    return strcmp(*(const char **) a, *(const char **) b);
+}
+
+/**
  *
  * @param text the command provided by the user to match against
  * @param state 0 on the first call, different on subsequent calls
