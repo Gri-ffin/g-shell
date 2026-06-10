@@ -90,6 +90,7 @@ char **resolve_executables_in_path(int *count) {
                                     free(executables[i]);
                                 }
                                 free(executables);
+                                closedir(dir);
                                 return NULL;
                             }
                             executables = tmp;
