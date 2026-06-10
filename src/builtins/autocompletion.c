@@ -4,7 +4,6 @@
 #include <string.h>
 #include <readline/readline.h>
 #include "../path.h"
-#include "util.h"
 #include "../utils.h"
 
 const char *insults[] = {
