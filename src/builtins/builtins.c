@@ -9,8 +9,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-char *builtins[] = {"type", "echo", "pwd", "cd", "exit", NULL};
-
+char *builtins[] = {"cd", "echo", "exit", "pwd", "type", NULL};
+const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**
  * @brief the main echo command
  * @param args the arguments passed in the shell

@@ -9,6 +9,15 @@
 #define INITIAL_CAPACITY 10
 
 /**
+ * @brief Comparison helper function for qsort to sort string arrays alphabetically.
+ */
+int compare(const void *a, const void *b) {
+    const char *str_a = *(const char **) a;
+    const char *str_b = *(const char **) b;
+    return strcmp(str_a, str_b);
+}
+
+/**
  *
  * @param count the count of files that should be updated
  * @param dirname the directory name to scan for files

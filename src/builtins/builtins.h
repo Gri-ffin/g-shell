@@ -1,6 +1,7 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 extern char *builtins[];
+extern const int builtins_count;
 
 void handle_type(char *arg, int fd);
 

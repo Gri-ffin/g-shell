@@ -7,18 +7,10 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include "utils.h"
 
 #define PATH_DELIMITER ":"
 #define INITIAL_CAPACITY 10
-
-/**
- * @brief Comparison helper function for qsort to sort string arrays alphabetically.
- */
-int compare(const void *a, const void *b) {
-    const char *str_a = *(const char **) a;
-    const char *str_b = *(const char **) b;
-    return strcmp(str_a, str_b);
-}
 
 /**
  * @brief Searches directories in the PATH environment variable to find a matching executable.

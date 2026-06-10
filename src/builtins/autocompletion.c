@@ -24,7 +24,8 @@ const char *insults[] = {
  * @return a dynamically allocated string match, or NULL if no more matches
  */
 char *builtin_generator(const char *text, const int state) {
-    static int list_index, len;
+    static int list_index;
+    static size_t len;
     static char **executables = NULL;
     static int executables_count = 0;
     static char **filenames = NULL;
@@ -61,7 +62,6 @@ char *builtin_generator(const char *text, const int state) {
 
     // First: yield matching builtins
     char *name;
-    // iterate through the builtins array
     while ((name = builtins[list_index])) {
         list_index++;
         if (strncmp(text, name, len) == 0) {
@@ -70,21 +70,13 @@ char *builtin_generator(const char *text, const int state) {
     }
 
     // Then: yield matching executables, but SKIP ones already covered by builtins
+    // use binary search instead of linear scan
     while (exec_index < executables_count) {
-        const char *ext = executables[exec_index++];
-        if (strncmp(ext, text, len) != 0)
+        const char *executable = executables[exec_index++];
+        if (strncmp(text, executable, len) != 0)
             continue;
-
-        // Check if this name is already in builtins
-        bool is_builtin = false;
-        for (int i = 0; builtins[i] != NULL; i++) {
-            if (strcmp(ext, builtins[i]) == 0) {
-                is_builtin = true;
-                break;
-            }
-        }
-        if (!is_builtin)
-            return strdup(ext);
+        if (!bsearch(&executable, builtins, builtins_count, sizeof(char *), builtin_cmp))
+            return strdup(executable);
     }
 
     // Then yield matching file names
@@ -114,7 +106,7 @@ char **shell_completion(const char *text, const int start, int end) {
         matches = rl_completion_matches(text, builtin_generator);
         if (matches == NULL) {
             const int num_insults = sizeof(insults) / sizeof(insults[0]);
-            const int random_index = rand() % num_insults;
+            const uint32_t random_index = arc4random_uniform(num_insults);
 
             // print the insult on a new line, then restore the prompt seamlessly
             printf("\n%s\n", insults[random_index]);
