@@ -3,6 +3,8 @@
 #include "builtins.h"
 #include <string.h>
 #include <readline/readline.h>
+// ci fail without this
+#include <stdint.h>
 #include "../path.h"
 #include "../utils.h"
 
