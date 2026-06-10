@@ -11,13 +11,22 @@
 #define PATH_DELIMITER ":"
 #define INITIAL_CAPACITY 10
 
-// helper function to use for the sort
+/**
+ * @brief Comparison helper function for qsort to sort string arrays alphabetically.
+ */
 int compare(const void *a, const void *b) {
     const char *str_a = *(const char **) a;
     const char *str_b = *(const char **) b;
     return strcmp(str_a, str_b);
 }
 
+/**
+ * @brief Searches directories in the PATH environment variable to find a matching executable.
+ * @param cmd      The name of the command to look for.
+ * @param out_path Buffer to store the absolute path if found.
+ * @param max_len  The maximum capacity of the out_path buffer.
+ * @return true if the command is found and executable, false otherwise.
+ */
 bool resolve_path(const char *cmd, char *out_path, size_t max_len) {
     const char *env_path = getenv("PATH");
     if (env_path == NULL) {
@@ -42,7 +51,11 @@ bool resolve_path(const char *cmd, char *out_path, size_t max_len) {
     return false;
 }
 
-// find all executables in the path, to let Readline autocomplete them
+/**
+ * @brief Scans all PATH directories to build a sorted, deduplicated list of available executables.
+ * @param count Pointer to an integer where the total number of unique executables will be stored.
+ * @return A null-terminated array of dynamically allocated strings, or NULL on error.
+ */
 char **resolve_executables_in_path(int *count) {
     int capacity = INITIAL_CAPACITY;
     char **executables = malloc(capacity * sizeof(char *));

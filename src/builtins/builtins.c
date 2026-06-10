@@ -11,7 +11,11 @@
 
 char *builtins[] = {"type", "echo", "pwd", "cd", "exit", NULL};
 
-// The `echo` builtin command
+/**
+ * @brief the main echo command
+ * @param args the arguments passed in the shell
+ * @param fd the file descriptor to write to
+ */
 void handle_echo(char **args, const int fd) {
     for (int i = 1; args[i] != NULL; i++) {
         dprintf(fd, "%s", args[i]);
@@ -22,7 +26,11 @@ void handle_echo(char **args, const int fd) {
     dprintf(fd, "\n");
 }
 
-// The `type` builtin command
+/**
+ * @brief the main `type` command
+ * @param arg the argument to handle type onto
+ * @param fd the file descriptor to write to
+ */
 void handle_type(char *arg, const int fd) {
     int i = 0;
     if (arg == NULL) {
@@ -46,7 +54,10 @@ void handle_type(char *arg, const int fd) {
     }
 }
 
-// The `pwd` builtin comamnd
+/**
+ * @brief Prints the current working directory.
+ * @param fd The file descriptor to write the path to.
+ */
 void handle_pwd(const int fd) {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -56,7 +67,10 @@ void handle_pwd(const int fd) {
     }
 }
 
-// The `cd` builtin command
+/**
+ * @brief Changes the current working directory, defaulting to HOME if empty or '~'.
+ * @param path The destination directory path.
+ */
 void handle_cd(const char *path) {
     if (path == NULL || strcmp(path, "~") == 0) {
         const char *home = getenv("HOME");
@@ -77,7 +91,12 @@ void handle_cd(const char *path) {
     }
 }
 
-// Function to run external commands
+/**
+ * @brief Forks and executes an external system program with optional I/O redirection.
+ * @param program  The name or path of the external command.
+ * @param args     The null-terminated argument vector for the command.
+ * @param fd       The file descriptor to redirect stdout to.
+ */
 void run_program(const char *program, char **args, const int fd) {
     char resolved_path[PATH_MAX];
     if (resolve_path(program, resolved_path, sizeof(resolved_path))) {

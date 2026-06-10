@@ -17,8 +17,11 @@
 #define REDIRECTION_SUCCESS (0)
 #define PARSING_ERROR (-1)
 
-// Helper to extract redirections from the arguments list and open the files
-// Returns 0 on success, -1 on error
+/**
+ * @brief Scans arguments for I/O redirection operators, opens target files, and removes tokens.
+ * @param cmd Pointer to the Command structure to modify.
+ * @return 0 (REDIRECTION_SUCCESS) on success, or negative error code on failure.
+ */
 static int process_redirections(Command *cmd) {
     for (int i = 0; i < cmd->arg_count; i++) {
         if (cmd->args[i] == NULL) break;
@@ -63,7 +66,11 @@ static int process_redirections(Command *cmd) {
     return REDIRECTION_SUCCESS;
 }
 
-// Main parser function
+/**
+ * @brief Parses a raw input string into a shell Command structure, handling quotes, escapes, and redirections.
+ * @param input The raw command line string to be tokenized and parsed.
+ * @return A populated Command structure; cmd.arg_count will equal PARSING_ERROR on failure.
+ */
 Command parse_command(char *input) {
     Command cmd;
     // Initialize the struct with safe defaults

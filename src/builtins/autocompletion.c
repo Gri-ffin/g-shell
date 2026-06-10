@@ -15,8 +15,12 @@ const char *insults[] = {
     "Present day... Present time... Command not found in the Wired."
 };
 
-// Readline calls this repeatedly. It must return a malloc'd string for each match,
-// and NULL when there are no more matches left.
+/**
+ *
+ * @param text the command provided by the user to match against
+ * @param state 0 on the first call, different on subsequent calls
+ * @return a dynamically allocated string match, or NULL if no more matches
+ */
 char *builtin_generator(const char *text, const int state) {
     static int list_index, len;
     static char **executables = NULL;
@@ -69,8 +73,15 @@ char *builtin_generator(const char *text, const int state) {
     return NULL;
 }
 
-// The Attempted Completion Function
-// This intercepts the default filename completion.
+/**
+ * @brief Handles tab-completion for shell commands.
+ * Only triggers at the start of a line (start == 0) to match builtins.
+ * If completion fails, it prints a random insult and restores the prompt.
+ * * @param text  The string prefix being autocompleted.
+ * @param start The buffer index where the word begins.
+ * @param end   The buffer index where the word ends.
+ * @return Array of string matches, or NULL to fall back to filename completion.
+ */
 char **shell_completion(const char *text, const int start, int end) {
     char **matches = NULL;
 
