@@ -4,6 +4,8 @@
 #include <string.h>
 #include <readline/readline.h>
 #include "../path.h"
+#include "util.h"
+#include "../utils.h"
 
 const char *insults[] = {
     "(⌐■_■) El Psy Kongroo... The Organization erased that command.",
@@ -24,13 +26,16 @@ const char *insults[] = {
 char *builtin_generator(const char *text, const int state) {
     static int list_index, len;
     static char **executables = NULL;
-    static int count = 0;
+    static int executables_count = 0;
+    static char **filenames = NULL;
+    static int files_count = 0;
     static int exec_index = 0;
+    static int file_index = 0;
     static bool initialized = false;
 
     // only initialize the array once
     if (!initialized) {
-        executables = resolve_executables_in_path(&count);
+        executables = resolve_executables_in_path(&executables_count);
         initialized = true;
     }
 
@@ -38,6 +43,18 @@ char *builtin_generator(const char *text, const int state) {
         list_index = 0;
         len = strlen(text);
         exec_index = 0;
+        file_index = 0;
+
+        // clean up previous files, we changed states
+        if (filenames != NULL) {
+            for (int i = 0; i < files_count; i++)
+                free(filenames[i]);
+            free(filenames);
+            filenames = NULL;
+        }
+        files_count = 0;
+
+        filenames = resolve_files_in_dir(&files_count, ".");
     }
 
     if (executables == NULL) return NULL;
@@ -53,7 +70,7 @@ char *builtin_generator(const char *text, const int state) {
     }
 
     // Then: yield matching executables, but SKIP ones already covered by builtins
-    while (exec_index < count) {
+    while (exec_index < executables_count) {
         const char *ext = executables[exec_index++];
         if (strncmp(ext, text, len) != 0)
             continue;
@@ -68,6 +85,13 @@ char *builtin_generator(const char *text, const int state) {
         }
         if (!is_builtin)
             return strdup(ext);
+    }
+
+    // Then yield matching file names
+    while (file_index < files_count) {
+        const char *file = filenames[file_index++];
+        if (strncmp(file, text, len) == 0)
+            return strdup(file);
     }
 
     return NULL;
