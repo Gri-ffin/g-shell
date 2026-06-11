@@ -8,7 +8,7 @@
 #include "../path.h"
 #include "../utils.h"
 #include <sys/stat.h>
-#include <sys/syslimits.h>
+#include <limits.h>
 
 const char *insults[] = {
     "(⌐■_■) El Psy Kongroo... The Organization erased that command.",
