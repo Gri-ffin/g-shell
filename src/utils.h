@@ -3,5 +3,5 @@
 
 int compare(const void *a, const void *b);
 
-char **resolve_files_in_dir(int *count, const char *dirname);
+char **resolve_files_or_dirs_in_dir(int *count, const char *dirname);
 #endif //CODECRAFTERS_SHELL_C_UTILS_H

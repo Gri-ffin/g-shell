@@ -19,11 +19,11 @@ int compare(const void *a, const void *b) {
 
 /**
  *
- * @param count the count of files that should be updated
- * @param dirname the directory name to scan for files
- * @return either NULL or the names of the files in the directory
+ * @param count the count of files and dirs that should be updated
+ * @param dirname the directory name to scan for files and dirs
+ * @return either NULL or the names of the files/dirs in the directory
  */
-char **resolve_files_in_dir(int *count, const char *dirname) {
+char **resolve_files_or_dirs_in_dir(int *count, const char *dirname) {
     DIR *dir = opendir(dirname);
     int capacity = INITIAL_CAPACITY;
     char **filenames = malloc(capacity * sizeof(char *));
@@ -43,7 +43,7 @@ char **resolve_files_in_dir(int *count, const char *dirname) {
 
         struct stat st;
         stat(full_path, &st);
-        if (S_ISREG(st.st_mode)) {
+        if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode)) {
             if (*count >= capacity) {
                 capacity *= 2;
                 char **tmp = realloc(filenames, capacity * sizeof(char *));
@@ -57,7 +57,8 @@ char **resolve_files_in_dir(int *count, const char *dirname) {
                 }
                 filenames = tmp;
             }
-            filenames[*count] = strdup(entry->d_name);
+            filenames[*count] = malloc(strlen(dirname) + strlen(entry->d_name) + 2);
+            sprintf(filenames[*count], "%s/%s", dirname, entry->d_name);
             (*count)++;
         }
     }

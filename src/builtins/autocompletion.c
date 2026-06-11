@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include "../path.h"
 #include "../utils.h"
+#include <sys/stat.h>
+#include <sys/syslimits.h>
 
 const char *insults[] = {
     "(⌐■_■) El Psy Kongroo... The Organization erased that command.",
@@ -63,7 +65,15 @@ char *builtin_generator(const char *text, const int state) {
         }
         files_count = 0;
 
-        filenames = resolve_files_in_dir(&files_count, ".");
+        const char *last_slash = strrchr(text, '/');
+        char scan_dir[PATH_MAX];
+        if (last_slash) {
+            snprintf(scan_dir, sizeof(scan_dir), "%.*s", (int)(last_slash - text), text);
+        } else {
+            strncpy(scan_dir, ".", sizeof(scan_dir));
+        }
+
+        filenames = resolve_files_or_dirs_in_dir(&files_count, scan_dir);
     }
 
     if (executables == NULL) return NULL;
@@ -73,6 +83,7 @@ char *builtin_generator(const char *text, const int state) {
     while ((name = builtins[list_index])) {
         list_index++;
         if (strncmp(text, name, len) == 0) {
+            rl_completion_append_character = ' ';
             return strdup(name); // readline will free this memory
         }
     }
@@ -83,15 +94,65 @@ char *builtin_generator(const char *text, const int state) {
         const char *executable = executables[exec_index++];
         if (strncmp(text, executable, len) != 0)
             continue;
-        if (!bsearch(&executable, builtins, builtins_count, sizeof(char *), builtin_cmp))
+        if (!bsearch(&executable, builtins, builtins_count, sizeof(char *), builtin_cmp)) {
+            rl_completion_append_character = ' ';
             return strdup(executable);
+        }
     }
+
+    // get position of the last slash
+    const char *last_slash = strrchr(text, '/');
+    char expected_prefix[PATH_MAX];
+
+    if (last_slash) {
+        // If text is "src/pa", copy up to the slash -> "src/"
+        snprintf(expected_prefix, sizeof(expected_prefix), "%.*s/", (int)(last_slash - text), text);
+    } else {
+        // if just "Mak", wel will look in "." and prepend "./"
+        strcpy(expected_prefix, "./");
+    }
+
+    // The actual text we want to match against (e.g., "Mak" instead of "src/Mak")
+    const char *base_text = last_slash ? last_slash + 1 : text;
+    const size_t base_len = strlen(base_text);
 
     // Then yield matching file names
     while (file_index < files_count) {
-        const char *file = filenames[file_index++];
-        if (strncmp(file, text, len) == 0)
-            return strdup(file);
+        const char *full_file = filenames[file_index++];
+
+        // Skip over the directory prefix that utils.c prepended
+        const char *file_basename = full_file;
+        // If full_file is "./Makefile" and expected_prefix is "./"
+        if (strncmp(full_file, expected_prefix, strlen(expected_prefix)) == 0) {
+            file_basename += strlen(expected_prefix); // file becomes just Makefile
+        }
+
+        // Compare just the base name
+        if (strncmp(file_basename, base_text, base_len) == 0) {
+            struct stat st;
+            const int is_dir = (stat(full_file, &st) == 0 && S_ISDIR(st.st_mode));
+
+            char *result;
+            // Reconstruct the string to exactly match how the user typed the directory
+            if (last_slash) {
+                // If text starts at memory address 1000 ("src/pa")
+                // last_slash is the address of the / character, which is at memory address 1003,
+                // 1003 - 1000 = 3, plus 1 byte for "/" and the length of the filename
+                // if dir we want to append "/" and "\0" otherwise just 1 byte for space.
+                result = malloc((last_slash - text) + 1 + strlen(file_basename) + (is_dir ? 2 : 1));
+                sprintf(result, "%.*s/%s%s", (int)(last_slash - text), text, file_basename, is_dir ? "/" : "");
+            } else {
+                result = malloc(strlen(file_basename) + (is_dir ? 2 : 1));
+                sprintf(result, "%s%s", file_basename, is_dir ? "/" : "");
+            }
+
+            if (is_dir) {
+                rl_completion_append_character = '\0';
+            } else {
+                rl_completion_append_character = ' ';
+            }
+            return result;
+        }
     }
 
     return NULL;

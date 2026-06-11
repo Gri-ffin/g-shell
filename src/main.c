@@ -10,7 +10,7 @@
 #include "builtins/autocompletion.h"
 #include "command.h"
 
-int main(int argc, char *argv[]) {
+int main() {
     setbuf(stdout, NULL);
     printf("\033[H\033[2J");
     char *input = NULL;
