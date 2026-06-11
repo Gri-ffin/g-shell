@@ -51,17 +51,9 @@ int main(int argc, char *argv[]) {
             free(input);
             exit(0);
         }
-        if (strcmp(cmd.cmd, "echo") == 0) {
-            handle_echo(cmd.args, STDOUT_FILENO);
-        } else if (strcmp(cmd.cmd, "type") == 0) {
-            handle_type(cmd.args[1], STDOUT_FILENO);
-        } else if (strcmp(cmd.cmd, "pwd") == 0) {
-            handle_pwd(STDOUT_FILENO);
-        } else if (strcmp(cmd.cmd, "cd") == 0) {
-            handle_cd(cmd.args[1]);
-        } else {
-            run_program(cmd.cmd, cmd.args, STDOUT_FILENO);
-        }
+        const builtin_fn fn = find_builtin(cmd.cmd);
+        if (fn) fn(&cmd);
+        else run_program(cmd.cmd, cmd.args, STDOUT_FILENO);
 
         if (cmd.saved_stdout != -1) {
             dup2(cmd.saved_stdout, STDOUT_FILENO); // Put the terminal back

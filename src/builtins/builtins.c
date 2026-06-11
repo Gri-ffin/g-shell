@@ -9,14 +9,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-char *builtins[] = {"cd", "echo", "exit", "pwd", "type", NULL};
+char *builtins[] = {"exit", "go", "print", "pwd", "whatis", NULL};
 const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**
- * @brief the main echo command
+ * @brief prints the arguments back to the user
  * @param args the arguments passed in the shell
  * @param fd the file descriptor to write to
  */
-void handle_echo(char **args, const int fd) {
+void handle_print(char **args, const int fd) {
     for (int i = 1; args[i] != NULL; i++) {
         dprintf(fd, "%s", args[i]);
         if (args[i + 1] != NULL) {
@@ -27,11 +27,12 @@ void handle_echo(char **args, const int fd) {
 }
 
 /**
- * @brief the main `type` command
+ * @brief prints whether the argument is a valid builtin
+ * or an external program or doesn't exist.
  * @param arg the argument to handle type onto
  * @param fd the file descriptor to write to
  */
-void handle_type(char *arg, const int fd) {
+void handle_whatis(char *arg, const int fd) {
     int i = 0;
     if (arg == NULL) {
         dprintf(fd, "type: missing argument\n");
@@ -71,23 +72,23 @@ void handle_pwd(const int fd) {
  * @brief Changes the current working directory, defaulting to HOME if empty or '~'.
  * @param path The destination directory path.
  */
-void handle_cd(const char *path) {
+void handle_go(const char *path) {
     if (path == NULL || strcmp(path, "~") == 0) {
         const char *home = getenv("HOME");
 
         if (home == NULL) {
-            fprintf(stderr, "cd: environment variable home not set.\n");
+            fprintf(stderr, "go: environment variable home not set.\n");
             return;
         }
 
         if (chdir(home) == -1) {
-            perror("cd");
+            perror("go");
         }
         return;
     }
 
     if (chdir(path) == -1) {
-        fprintf(stderr, "cd: %s: %s\n", path, strerror(errno));
+        fprintf(stderr, "go: %s: %s\n", path, strerror(errno));
     }
 }
 
@@ -121,4 +122,25 @@ void run_program(const char *program, char **args, const int fd) {
     } else {
         printf("%s: command not found\n", program);
     }
+}
+
+static void do_print(Command *cmd) { handle_print(cmd->args, STDOUT_FILENO); }
+static void do_whatis(Command *cmd) { handle_whatis(cmd->args[1], STDOUT_FILENO); }
+static void do_pwd(Command *cmd) { handle_pwd(STDOUT_FILENO); }
+static void do_go(Command *cmd) { handle_go(cmd->args[1]); }
+
+static const BuiltinEntry dispatch[] = {
+    {"print", do_print},
+    {"whatis", do_whatis},
+    {"pwd", do_pwd},
+    {"go", do_go},
+    {NULL, NULL}, // sentinel
+};
+
+builtin_fn find_builtin(const char *name) {
+    for (int i = 0; dispatch[i].name != NULL; i++) {
+        if (strcmp(dispatch[i].name, name) == 0)
+            return dispatch[i].fn;
+    }
+    return NULL;
 }
