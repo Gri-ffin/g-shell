@@ -1,5 +1,20 @@
 #ifndef CODECRAFTERS_SHELL_C_UTILS_H
 #define CODECRAFTERS_SHELL_C_UTILS_H
+#include <stdbool.h>
+
+typedef struct {
+    void **items;
+    int count;
+    int capacity;
+} DynamicArray;
+
+DynamicArray *create_dynamic_array(void);
+
+bool array_push(void *item, DynamicArray *array);
+
+bool array_pop(DynamicArray *array);
+
+bool array_free(DynamicArray *array);
 
 int compare(const void *a, const void *b);
 

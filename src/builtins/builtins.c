@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "complete.h"
+
 char *builtins[] = {"complete", "exit", "go", "print", "pwd", "whatis", NULL};
 const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**

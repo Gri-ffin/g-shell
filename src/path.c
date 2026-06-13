@@ -49,12 +49,15 @@ bool resolve_path(const char *cmd, char *out_path, size_t max_len) {
  * @return A null-terminated array of dynamically allocated strings, or NULL on error.
  */
 char **resolve_executables_in_path(int *count) {
-    int capacity = INITIAL_CAPACITY;
-    char **executables = malloc(capacity * sizeof(char *));
-    if (!executables) return NULL;
-    const char *env_path = getenv("PATH");
-    if (env_path == NULL)
+    DynamicArray *executables_array = create_dynamic_array();
+    if (!executables_array) {
         return NULL;
+    }
+    const char *env_path = getenv("PATH");
+    if (env_path == NULL) {
+        free(executables_array);
+        return NULL;
+    }
 
     char *path_copy = strdup(env_path);
     char *token = strtok(path_copy, PATH_DELIMITER);
@@ -73,24 +76,15 @@ char **resolve_executables_in_path(int *count) {
                     struct stat st;
                     stat(full_path, &st);
                     if (S_ISREG(st.st_mode)) {
-                        if (*count >= capacity) {
-                            capacity *= 2;
-                            char **tmp = realloc(executables, sizeof(char *) * capacity);
-                            // guard against realloc failing
-                            if (tmp == NULL) {
-                                for (int i = 0; i < *count; i++) {
-                                    free(executables[i]);
-                                }
-                                free(executables);
-                                closedir(dir);
-                                return NULL;
-                            }
-                            executables = tmp;
+                        char *cmd_name = strdup(entry->d_name);
+                        if (!array_push(cmd_name, executables_array)) {
+                            // free everything
+                            free(cmd_name);
+                            closedir(dir);
+                            free(path_copy);
+                            array_free(executables_array);
+                            return NULL;
                         }
-                        // naively add duplicates for now, we will remove them later
-                        // if we try to check duplicates its O(N^2)
-                        executables[*count] = strdup(entry->d_name);
-                        (*count)++;
                     }
                 }
             }
@@ -100,7 +94,18 @@ char **resolve_executables_in_path(int *count) {
     }
     free(path_copy);
 
+    // If we found nothing, clean up and return
+    if (executables_array->count == 0) {
+        *count = 0;
+        array_free(executables_array);
+        return NULL;
+    }
+
     // Now clean the duplicates
+    // we need to cast to char** instead of the current void**
+    char **executables = (char **) executables_array->items;
+    // initiliaze count too since we will need it
+    *count = executables_array->count;
     qsort(executables, *count, sizeof(char *), compare);
     int unique = 1;
 
@@ -113,7 +118,14 @@ char **resolve_executables_in_path(int *count) {
     }
 
     *count = unique;
-    executables[*count] = NULL;
+    executables_array->count = unique;
 
-    return executables;
+    // sentinel
+    array_push(NULL, executables_array);
+
+    char **final_array = (char **) executables_array->items;
+    // Just 'free', not 'array_free'! We want to keep the strings.
+    free(executables_array);
+
+    return final_array;
 }

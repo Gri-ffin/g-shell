@@ -9,6 +9,91 @@
 #define INITIAL_CAPACITY 10
 
 /**
+ *
+ * @return a newly allocated dynamic array, NULL on error
+ */
+DynamicArray *create_dynamic_array() {
+    DynamicArray *dyn_array = malloc(sizeof(DynamicArray));
+    if (!dyn_array) {
+        fprintf(stderr, "error: failed to allocate mem for dynamic array.\n");
+        return NULL;
+    }
+
+    dyn_array->capacity = INITIAL_CAPACITY;
+    dyn_array->count = 0;
+    dyn_array->items = malloc(dyn_array->capacity * sizeof(void *));
+
+    if (!dyn_array->items) {
+        fprintf(stderr, "error: failed to allocate mem for dynamic array items.\n");
+        free(dyn_array->items);
+        free(dyn_array);
+        return NULL;
+    }
+
+    return dyn_array;
+}
+
+/**
+ *
+ * @param item item to push to the end of the array
+ * @param array the array which will hold the item
+ * @return true if operation succeed, otherwise false
+ */
+bool array_push(void *item, DynamicArray *array) {
+    if (array->count >= array->capacity) {
+        const int new_capacity = array->capacity * 2;
+        void **tmp = realloc(array->items, new_capacity * sizeof(void *));
+        if (!tmp) {
+            fprintf(stderr, "error: failed to allocate mem for dynamic array.\n");
+            return false;
+        }
+
+        array->items = tmp;
+        array->capacity = new_capacity;
+    }
+
+    array->items[array->count++] = item;
+    return true;
+}
+
+/**
+ *
+ * @param array array to pop the last item from
+ * @return true if operation succeed, otherwise false
+ */
+bool array_pop(DynamicArray *array) {
+    if (!array) {
+        return false;
+    }
+
+    if (array->count <= 0) {
+        fprintf(stderr, "error: array is empty.\n");
+        return false;
+    }
+    array->count--;
+    free(array->items[array->count]);
+    return true;
+}
+
+/**
+ *
+ * @param array array to free
+ * @return true on success, false otherwise
+ */
+bool array_free(DynamicArray *array) {
+    if (!array) {
+        return false;
+    }
+
+    for (int i = 0; i < array->count; i++) {
+        free(array->items[i]);
+    }
+    free(array->items);
+    free(array);
+    return true;
+}
+
+/**
  * @brief Comparison helper function for qsort to sort string arrays alphabetically.
  */
 int compare(const void *a, const void *b) {
