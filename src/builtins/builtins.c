@@ -93,6 +93,27 @@ void handle_go(const char *path) {
 }
 
 /**
+ * @param args_count the count of the arguments passed
+ * @param args the command line arguments
+ */
+void handle_complete(char **args, const int args_count) {
+    if (args_count != 3) {
+        // TODO: improve error text later
+        fprintf(stderr, "error: complete should have two arguments.\n");
+        return;
+    }
+    const char *command = args[2];
+    const char *arg = args[1];
+
+    if (strcmp(arg, "-p") == 0) {
+        // FIXME: just output the error for now
+        fprintf(stderr, "complete: %s: can't find the completion specification.\n", command);
+    } else {
+        fprintf(stderr, "%s: invalid argument.\n", arg);
+    }
+}
+
+/**
  * @brief Forks and executes an external system program with optional I/O redirection.
  * @param program  The name or path of the external command.
  * @param args     The null-terminated argument vector for the command.
@@ -124,16 +145,14 @@ void run_program(const char *program, char **args, const int fd) {
     }
 }
 
-// TODO: implement this later on
-void handle_complete() {
-}
-
 static void do_print(Command *cmd) { handle_print(cmd->args, STDOUT_FILENO); }
 static void do_whatis(Command *cmd) { handle_whatis(cmd->args[1], STDOUT_FILENO); }
 static void do_pwd(Command *cmd) { handle_pwd(STDOUT_FILENO); }
 static void do_go(Command *cmd) { handle_go(cmd->args[1]); }
+static void do_complete(Command *cmd) { handle_complete(cmd->args, cmd->arg_count); }
 
 static const BuiltinEntry dispatch[] = {
+    {"complete", do_complete},
     {"print", do_print},
     {"whatis", do_whatis},
     {"pwd", do_pwd},

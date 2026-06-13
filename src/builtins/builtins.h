@@ -15,7 +15,7 @@ void handle_pwd(int fd);
 
 void handle_cd(const char *path);
 
-void handle_complete();
+void handle_complete(char **args, int args_count);
 
 typedef void (*builtin_fn)(Command *cmd);
 

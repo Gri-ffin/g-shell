@@ -229,7 +229,19 @@ tests = [
             "path": "test_append_explicit_stderr.txt",
             "content": linux_expected if is_linux else mac_expected
         }
-    }
+    },
+    {
+        "name": "Builtin: complete -p outputs error for unknown spec",
+        "input": "complete -p mycmd\n",
+        "expected_lines": [],
+        "expected_stderr": "complete: mycmd: can't find the completion specification.\n"
+    },
+    {
+        "name": "Builtin: complete with wrong argument count",
+        "input": "complete -p\n",
+        "expected_lines": [],
+        "expected_stderr": "error: complete should have two arguments.\n"
+    },
 ]
 
 
