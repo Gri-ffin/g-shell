@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-char *builtins[] = {"exit", "go", "print", "pwd", "whatis", NULL};
+char *builtins[] = {"complete", "exit", "go", "print", "pwd", "whatis", NULL};
 const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**
  * @brief prints the arguments back to the user
@@ -122,6 +122,10 @@ void run_program(const char *program, char **args, const int fd) {
     } else {
         printf("%s: command not found\n", program);
     }
+}
+
+// TODO: implement this later on
+void handle_complete() {
 }
 
 static void do_print(Command *cmd) { handle_print(cmd->args, STDOUT_FILENO); }

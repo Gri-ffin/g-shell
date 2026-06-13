@@ -15,6 +15,8 @@ void handle_pwd(int fd);
 
 void handle_cd(const char *path);
 
+void handle_complete();
+
 typedef void (*builtin_fn)(Command *cmd);
 
 typedef struct {
