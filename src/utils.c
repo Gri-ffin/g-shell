@@ -110,11 +110,10 @@ int compare(const void *a, const void *b) {
  */
 char **resolve_files_or_dirs_in_dir(int *count, const char *dirname) {
     DIR *dir = opendir(dirname);
-    int capacity = INITIAL_CAPACITY;
-    char **filenames = malloc(capacity * sizeof(char *));
-    if (!filenames) return NULL;
+    DynamicArray *filenames_array = create_dynamic_array();
+    if (!filenames_array) return NULL;
     if (!dir) {
-        free(filenames);
+        array_free(filenames_array);
         return NULL;
     }
     struct dirent *entry;
@@ -127,26 +126,18 @@ char **resolve_files_or_dirs_in_dir(int *count, const char *dirname) {
         snprintf(full_path, sizeof(full_path), "%s/%s", dirname, entry->d_name);
 
         struct stat st;
-        stat(full_path, &st);
-        if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode)) {
-            if (*count >= capacity) {
-                capacity *= 2;
-                char **tmp = realloc(filenames, capacity * sizeof(char *));
-                if (tmp == NULL) {
-                    for (int i = 0; i < *count; i++) {
-                        free(filenames[i]);
-                    }
-                    free(filenames);
-                    closedir(dir);
-                    return NULL;
-                }
-                filenames = tmp;
+        if (stat(full_path, &st) == 0 && (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))) {
+            size_t file_len = strlen(dirname) + strlen(entry->d_name) + 2;
+            char *filename = malloc(file_len);
+            snprintf(filename, file_len, "%s/%s", dirname, entry->d_name);
+            if (!array_push(filename, filenames_array)) {
+                free(filename);
             }
-            filenames[*count] = malloc(strlen(dirname) + strlen(entry->d_name) + 2);
-            sprintf(filenames[*count], "%s/%s", dirname, entry->d_name);
-            (*count)++;
         }
     }
     closedir(dir);
+    *count = filenames_array->count;
+    char **filenames = (char **) filenames_array->items;
+    free(filenames_array);
     return filenames;
 }
