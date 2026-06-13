@@ -2,35 +2,38 @@
 #include <string.h>
 #include "complete.h"
 #include <stdlib.h>
+#include "../utils.h"
 
-static CompleteCommand *complete_commands = NULL;
-static int complete_commands_count = 0;
-static int capacity = 0;
+static DynamicArray *complete_commands_array = NULL;
 
 void register_complete(const char *path, const char *program) {
-    for (int i = 0; i < complete_commands_count; i++) {
-        if (strcmp(complete_commands[i].program, program) == 0) {
-            free(complete_commands[i].program);
-            complete_commands[i].program = strdup(program);
+    if (!complete_commands_array) {
+        complete_commands_array = create_dynamic_array();
+    }
+    const int count = complete_commands_array->count;
+    CompleteCommand **items = (CompleteCommand **) complete_commands_array->items;
+    for (int i = 0; i < count; i++) {
+        if (strcmp(items[i]->program, program) == 0) {
+            free(items[i]->path);
+            items[i]->path = strdup(path);
             return;
         }
     }
 
-    if (complete_commands_count == capacity) {
-        capacity = capacity == 0 ? 8 : capacity * 2;
-        CompleteCommand *tmp = realloc(complete_commands, capacity * sizeof(CompleteCommand));
-        if (tmp == NULL) {
-            // don't destroy the global state.
-            fprintf(stderr, "error: out of memory. Could not register autocomplete for '%s'.\n", program);
-            return;
-        }
-        complete_commands = tmp;
+    CompleteCommand *new_complete_command = malloc(sizeof(CompleteCommand));
+    if (!new_complete_command) {
+        fprintf(stderr, "error: out of memory.\n");
+        return;
     }
 
-    complete_commands[complete_commands_count++] = (CompleteCommand){
-        .program = strdup(program),
-        .path = strdup(path),
-    };
+    new_complete_command->program = strdup(program);
+    new_complete_command->path = strdup(path);
+
+    if (!array_push(new_complete_command, complete_commands_array)) {
+        free(new_complete_command->program);
+        free(new_complete_command->path);
+        free(new_complete_command);
+    }
 }
 
 /**
@@ -49,11 +52,19 @@ void handle_complete(char **args, const int args_count) {
             fprintf(stderr, "error: program name should be specified.\n");
             return;
         }
+
         const char *command = args[2];
-        for (int i = 0; i < complete_commands_count; i++) {
-            if (strcmp(complete_commands[i].program, command) == 0) {
-                const char *program = complete_commands[i].program;
-                const char *path = complete_commands[i].path;
+        // does the array exists at all?
+        if (!complete_commands_array || complete_commands_array->count == 0) {
+            fprintf(stderr, "complete: %s: can't find the completion specification.\n", command);
+            return;
+        }
+        const CompleteCommand **items = (const CompleteCommand **) complete_commands_array->items;
+
+        for (int i = 0; i < complete_commands_array->count; i++) {
+            if (strcmp(items[i]->program, command) == 0) {
+                const char *program = items[i]->program;
+                const char *path = items[i]->path;
                 printf("%s completion function is in '%s'\n", program, path);
                 return;
             }
