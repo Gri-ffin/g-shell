@@ -14,34 +14,32 @@ const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**
  * @brief prints the arguments back to the user
  * @param args the arguments passed in the shell
- * @param fd the file descriptor to write to
  */
-void handle_print(char **args, const int fd) {
+void handle_print(char **args) {
     for (int i = 1; args[i] != NULL; i++) {
-        dprintf(fd, "%s", args[i]);
+        printf("%s", args[i]);
         if (args[i + 1] != NULL) {
-            dprintf(fd, " ");
+            printf(" ");
         }
     }
-    dprintf(fd, "\n");
+    printf("\n");
 }
 
 /**
  * @brief prints whether the argument is a valid builtin
  * or an external program or doesn't exist.
  * @param arg the argument to handle type onto
- * @param fd the file descriptor to write to
  */
-void handle_whatis(char *arg, const int fd) {
+void handle_whatis(char *arg) {
     int i = 0;
     if (arg == NULL) {
-        dprintf(fd, "type: missing argument\n");
+        printf("type: missing argument\n");
         return;
     }
 
     while (builtins[i] != NULL) {
         if (strcmp(builtins[i], arg) == 0) {
-            dprintf(fd, "%s is a shell builtin\n", arg);
+            printf("%s is a shell builtin\n", arg);
             return;
         }
         i++;
@@ -49,20 +47,19 @@ void handle_whatis(char *arg, const int fd) {
 
     char resolved_path[PATH_MAX];
     if (resolve_path(arg, resolved_path, sizeof(resolved_path))) {
-        dprintf(fd, "%s is %s\n", arg, resolved_path);
+        printf("%s is %s\n", arg, resolved_path);
     } else {
-        dprintf(fd, "%s: not found\n", arg);
+        printf("%s: not found\n", arg);
     }
 }
 
 /**
  * @brief Prints the current working directory.
- * @param fd The file descriptor to write the path to.
  */
-void handle_pwd(const int fd) {
+void handle_pwd() {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
-        dprintf(fd, "%s\n", cwd);
+        printf("%s\n", cwd);
     } else {
         perror("pwd failed\n");
     }
@@ -117,9 +114,8 @@ void handle_complete(char **args, const int args_count) {
  * @brief Forks and executes an external system program with optional I/O redirection.
  * @param program  The name or path of the external command.
  * @param args     The null-terminated argument vector for the command.
- * @param fd       The file descriptor to redirect stdout to.
  */
-void run_program(const char *program, char **args, const int fd) {
+void run_program(const char *program, char **args) {
     char resolved_path[PATH_MAX];
     if (resolve_path(program, resolved_path, sizeof(resolved_path))) {
         const pid_t pid = fork();
@@ -129,11 +125,6 @@ void run_program(const char *program, char **args, const int fd) {
         }
 
         if (pid == 0) {
-            // for redirection force standard output to the new file descriptor instead
-            if (fd != STDOUT_FILENO) {
-                dup2(fd, STDOUT_FILENO);
-                close(fd);
-            }
             execv(resolved_path, args);
             perror("execv failed");
             exit(1);
@@ -145,9 +136,9 @@ void run_program(const char *program, char **args, const int fd) {
     }
 }
 
-static void do_print(Command *cmd) { handle_print(cmd->args, STDOUT_FILENO); }
-static void do_whatis(Command *cmd) { handle_whatis(cmd->args[1], STDOUT_FILENO); }
-static void do_pwd(Command *cmd) { handle_pwd(STDOUT_FILENO); }
+static void do_print(Command *cmd) { handle_print(cmd->args); }
+static void do_whatis(Command *cmd) { handle_whatis(cmd->args[1]); }
+static void do_pwd(Command *cmd) { handle_pwd(); }
 static void do_go(Command *cmd) { handle_go(cmd->args[1]); }
 static void do_complete(Command *cmd) { handle_complete(cmd->args, cmd->arg_count); }
 

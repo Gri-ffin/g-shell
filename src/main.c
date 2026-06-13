@@ -53,7 +53,7 @@ int main() {
         }
         const builtin_fn fn = find_builtin(cmd.cmd);
         if (fn) fn(&cmd);
-        else run_program(cmd.cmd, cmd.args, STDOUT_FILENO);
+        else run_program(cmd.cmd, cmd.args);
 
         if (cmd.saved_stdout != -1) {
             dup2(cmd.saved_stdout, STDOUT_FILENO); // Put the terminal back
