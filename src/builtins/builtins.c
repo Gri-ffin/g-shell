@@ -89,26 +89,6 @@ void handle_go(const char *path) {
     }
 }
 
-/**
- * @param args_count the count of the arguments passed
- * @param args the command line arguments
- */
-void handle_complete(char **args, const int args_count) {
-    if (args_count != 3) {
-        // TODO: improve error text later
-        fprintf(stderr, "error: complete should have two arguments.\n");
-        return;
-    }
-    const char *command = args[2];
-    const char *arg = args[1];
-
-    if (strcmp(arg, "-p") == 0) {
-        // FIXME: just output the error for now
-        fprintf(stderr, "complete: %s: can't find the completion specification.\n", command);
-    } else {
-        fprintf(stderr, "%s: invalid argument.\n", arg);
-    }
-}
 
 /**
  * @brief Forks and executes an external system program with optional I/O redirection.

@@ -240,7 +240,7 @@ tests = [
         "name": "Builtin: complete with wrong argument count",
         "input": "complete -p\n",
         "expected_lines": [],
-        "expected_stderr": "error: complete should have two arguments.\n"
+        "expected_stderr": "error: program name should be specified.\n"
     },
 ]
 
