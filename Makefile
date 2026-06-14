@@ -5,10 +5,10 @@ TARGET = shell
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/utils.c $(SRC_DIR)/builtins/builtins.c $(SRC_DIR)/path.c $(SRC_DIR)/parser.c $(SRC_DIR)/builtins/autocompletion.c $(SRC_DIR)/builtins/complete.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/utils.c $(SRC_DIR)/builtins/builtins.c $(SRC_DIR)/path.c $(SRC_DIR)/parser.c $(SRC_DIR)/builtins/auto_completion/autocompletion.c $(SRC_DIR)/builtins/complete.c
 OBJS = $(SRCS:.c=.o)
 
-HEADERS = $(SRC_DIR)/builtins/builtins.h $(SRC_DIR)/utils.h $(SRC_DIR)/path.h $(SRC_DIR)/parser.h $(SRC_DIR)/builtins/autocompletion.h $(SRC_DIR)/builtins/complete.h
+HEADERS = $(SRC_DIR)/builtins/builtins.h $(SRC_DIR)/utils.h $(SRC_DIR)/path.h $(SRC_DIR)/parser.h $(SRC_DIR)/builtins/auto_completion/autocompletion.h $(SRC_DIR)/builtins/complete.h
 
 .PHONY: all clean
 

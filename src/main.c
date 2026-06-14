@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <readline/readline.h>
-#include "builtins/autocompletion.h"
+#include "builtins/auto_completion/autocompletion.h"
 #include "command.h"
 
 int main() {

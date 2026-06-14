@@ -8,6 +8,15 @@ static DynamicArray *complete_commands_array = NULL;
 
 /**
  *
+ * @return a pointer to the array containing the completion commands
+ */
+DynamicArray *get_completion_scripts() {
+    if (!complete_commands_array) return NULL;
+    return complete_commands_array;
+}
+
+/**
+ *
  * @param path path to the completion script
  * @param program the name of the program
  */
