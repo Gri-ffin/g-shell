@@ -6,6 +6,11 @@
 
 static DynamicArray *complete_commands_array = NULL;
 
+/**
+ *
+ * @param path path to the completion script
+ * @param program the name of the program
+ */
 void register_complete(const char *path, const char *program) {
     if (!complete_commands_array) {
         complete_commands_array = create_dynamic_array();
