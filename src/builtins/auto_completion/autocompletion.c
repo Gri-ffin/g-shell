@@ -187,7 +187,7 @@ static char *generate_command_completion(const char *text, const size_t len) {
         // Compare just the base name
         if (strncmp(file_basename, base_text, base_len) == 0) {
             struct stat st;
-            const int is_dir = (stat(full_file, &st) == 0 && S_ISDIR(st.st_mode));
+            const int is_dir = stat(full_file, &st) == 0 && S_ISDIR(st.st_mode);
 
             char *result;
             // Reconstruct the string to exactly match how the user typed the directory
@@ -196,7 +196,7 @@ static char *generate_command_completion(const char *text, const size_t len) {
                 // last_slash is the address of the / character, which is at memory address 1003,
                 // 1003 - 1000 = 3, plus 1 byte for "/" and the length of the filename
                 // if dir we want to append "/" and "\0" otherwise just 1 byte for space.
-                result = malloc((last_slash - text) + 1 + strlen(file_basename) + (is_dir ? 2 : 1));
+                result = malloc(last_slash - text + 1 + strlen(file_basename) + (is_dir ? 2 : 1));
                 sprintf(result, "%.*s/%s%s", (int)(last_slash - text), text, file_basename, is_dir ? "/" : "");
             } else {
                 result = malloc(strlen(file_basename) + (is_dir ? 2 : 1));
@@ -222,7 +222,6 @@ static char *generate_argument_completion(const char *text, const size_t len) {
         while (script_output_index < script_output->count) {
             const char *candidate = (char *) script_output->items[script_output_index++];
             if (strncmp(text, candidate, len) == 0) {
-
                 rl_completion_append_character = ' ';
                 return strdup(candidate);
             }
@@ -268,7 +267,7 @@ char **shell_completion(const char *text, const int start, int end) {
     char **matches = NULL;
 
     // Track whether we are completing the first word or an argument
-    is_command_completion = (start == 0);
+    is_command_completion = start == 0;
 
     // always invoke our custom generator
     matches = rl_completion_matches(text, builtin_generator);
