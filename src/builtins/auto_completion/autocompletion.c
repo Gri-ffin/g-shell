@@ -11,6 +11,8 @@
 #include <limits.h>
 #include "../complete.h"
 
+#define COMP_POINT_SIZE 32
+
 const char *insults[] = {
     "(⌐■_■) El Psy Kongroo... The Organization erased that command.",
     "(ಠ_ಠ) Get in the robot, because that command doesn't exist.",
@@ -92,6 +94,12 @@ static void init_completion_scripts(const char *text) {
                     char invocation[PATH_MAX + 512];
                     snprintf(invocation, sizeof(invocation), "%s \"%s\" \"%s\"",
                              cmds[i]->path, text, rl_line_buffer);
+
+                    // Pass COMP_POINT and COMP_LINE to process
+                    char comp_point[COMP_POINT_SIZE];
+                    snprintf(comp_point, sizeof(comp_point), "%d", rl_point);
+                    setenv("COMP_LINE", rl_line_buffer, 1);
+                    setenv("COMP_POINT", comp_point, 1);
 
                     FILE *fp = popen(invocation, "r");
                     if (!fp) {
@@ -214,6 +222,7 @@ static char *generate_argument_completion(const char *text, const size_t len) {
         while (script_output_index < script_output->count) {
             const char *candidate = (char *) script_output->items[script_output_index++];
             if (strncmp(text, candidate, len) == 0) {
+
                 rl_completion_append_character = ' ';
                 return strdup(candidate);
             }
