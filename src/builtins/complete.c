@@ -51,6 +51,21 @@ void register_complete(const char *path, const char *program) {
 }
 
 /**
+ *
+ * @param command command to remove
+ */
+void remove_complete(const CompleteCommand *command) {
+    if (!complete_commands_array) {
+        fprintf(stderr, "error: no program completion has been registered yet.\n");
+        return;
+    }
+
+    if (!array_remove_item(complete_commands_array, command)) {
+        fprintf(stderr, "error: such program isn't currently registered.\n");
+    }
+}
+
+/**
  * @param args_count the count of the arguments passed
  * @param args the command line arguments
  */
@@ -92,6 +107,29 @@ void handle_complete(char **args, const int args_count) {
         const char *path = args[2];
         const char *program = args[3];
         register_complete(path, program);
+    } else if (strcmp(arg, "-d") == 0) {
+        if (args_count < 3) {
+            fprintf(stderr, "error: program name should be specified.\n");
+            return;
+        }
+
+        if (!complete_commands_array || complete_commands_array->count == 0) {
+            fprintf(stderr, "complete: no complete scripts are registered yet.\n");
+            return;
+        }
+
+        const CompleteCommand **items = (const CompleteCommand **) complete_commands_array->items;
+        const CompleteCommand *command = NULL;
+        const char *program = args[2];
+        for (int i = 0; i < complete_commands_array->count; i++) {
+            if (strcmp(items[i]->program, program) == 0) {
+                command = (CompleteCommand *) items[i];
+                remove_complete(command);
+                return;
+            }
+        }
+
+        fprintf(stderr, "complete: %s: can't find the program.\n", program);
     } else {
         fprintf(stderr, "%s: invalid argument.\n", arg);
     }

@@ -12,4 +12,6 @@ DynamicArray *get_completion_scripts();
 void register_complete(const char *path, const char *program);
 
 void handle_complete(char **args, int args_count);
+
+void remove_complete(const CompleteCommand *command);
 #endif //CODECRAFTERS_SHELL_C_COMPLETE_H

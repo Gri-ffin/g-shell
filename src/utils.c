@@ -94,6 +94,28 @@ bool array_free(DynamicArray *array) {
 }
 
 /**
+ *
+ * @param array array to delete the item from
+ * @param item the item to delete
+ * @return true if success, false otherwise
+ */
+bool array_remove_item(DynamicArray *array, const void *item) {
+    if (!array) return false;
+    for (int i = 0; i < array->count; i++) {
+        if (array->items[i] == item) {
+            free(array->items[i]);
+            memmove(&array->items[i], &array->items[i + 1], (array->count - i - 1) * sizeof(void *));
+        }
+
+        array->count--;
+        return true;
+    }
+
+    // item not found
+    return false;
+}
+
+/**
  * @brief Comparison helper function for qsort to sort string arrays alphabetically.
  */
 int compare(const void *a, const void *b) {
