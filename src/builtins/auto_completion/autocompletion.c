@@ -1,6 +1,7 @@
 #include "autocompletion.h"
 #include <stdlib.h>
 #include "../builtins.h"
+#include <stdio.h>
 #include <string.h>
 #include <readline/readline.h>
 // ci fail without this

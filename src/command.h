@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #define MAX_ARGS 64
+#include <stdbool.h>
 
 typedef struct {
     char *args[MAX_ARGS];
@@ -13,5 +14,6 @@ typedef struct {
     int fd_err;
     int saved_stdout;
     int saved_stderr;
+    bool background;
 } Command;
 #endif // COMMAND_H

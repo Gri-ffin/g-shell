@@ -91,10 +91,6 @@ void handle_go(const char *path) {
     }
 }
 
-// TODO: implement later
-void handle_jobs() {}
-
-
 /**
  * @brief Forks and executes an external system program with optional I/O redirection.
  * @param program  The name or path of the external command.

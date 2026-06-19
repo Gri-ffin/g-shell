@@ -4,11 +4,25 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <readline/readline.h>
 #include "builtins/auto_completion/autocompletion.h"
 #include "command.h"
+#include "builtins/jobs.h"
+
+// THESE SHOULD NEVER GO TO THE BACKGROUND JOB
+static const char *no_background[] = {"go", "exit", "cd", NULL};
+
+/**
+ *
+ * @param cmd command name
+ * @return if the command can be run in the background or not
+ */
+static bool can_background(const char *cmd) {
+    for (int i = 0; no_background[i]; i++)
+        if (strcmp(cmd, no_background[i]) == 0) return false;
+    return true;
+}
 
 int main() {
     setbuf(stdout, NULL);
@@ -18,7 +32,9 @@ int main() {
     rl_attempted_completion_function = shell_completion;
 
     while (true) {
+        jobs_reap();
         input = readline("$ ");
+        fflush(stdout);
 
         if (input == NULL) {
             break;
@@ -52,8 +68,21 @@ int main() {
             exit(0);
         }
         const builtin_fn fn = find_builtin(cmd.cmd);
-        if (fn) fn(&cmd);
-        else run_program(cmd.cmd, cmd.args);
+        if (cmd.background && can_background(cmd.cmd)) {
+            const pid_t pid = fork();
+            if (pid == 0) {
+                if (fn) {
+                    fn(&cmd);
+                    exit(0);
+                }
+                run_program(cmd.cmd, cmd.args);
+                exit(0);
+            }
+            jobs_add(pid, cmd.cmd);
+        } else {
+            if (fn) fn(&cmd);
+            else run_program(cmd.cmd, cmd.args);
+        }
 
         if (cmd.saved_stdout != -1) {
             dup2(cmd.saved_stdout, STDOUT_FILENO); // Put the terminal back

@@ -131,6 +131,12 @@ Command parse_command(char *input) {
     }
     cmd.args[cmd.arg_count] = NULL;
 
+    // we have a job we need to run
+    if (cmd.arg_count > 0 && strcmp(cmd.args[cmd.arg_count - 1], "&") == 0) {
+        cmd.background = true;
+        cmd.args[--cmd.arg_count] = NULL;
+    }
+
     // If we successfully parsed arguments, resolve redirections and set the main command
     if (cmd.arg_count > 0) {
         if (process_redirections(&cmd) == -1) {
