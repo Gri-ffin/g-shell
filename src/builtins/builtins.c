@@ -11,7 +11,7 @@
 
 #include "complete.h"
 
-char *builtins[] = {"complete", "exit", "go", "print", "pwd", "whatis", NULL};
+char *builtins[] = {"complete", "exit", "go", "jobs", "print", "pwd", "whatis", NULL};
 const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
 /**
  * @brief prints the arguments back to the user
@@ -90,6 +90,9 @@ void handle_go(const char *path) {
         fprintf(stderr, "go: %s: %s\n", path, strerror(errno));
     }
 }
+
+// TODO: implement later
+void handle_jobs() {}
 
 
 /**

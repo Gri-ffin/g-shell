@@ -32,13 +32,14 @@ tests = [
     },
     {
         "name": "Builtin: whatis for builtins",
-        "input": "whatis print\nwhatis exit\nwhatis pwd\nwhatis go\nwhatis whatis\n",
+        "input": "whatis print\nwhatis exit\nwhatis pwd\nwhatis go\nwhatis whatis\nwhatis jobs\n",
         "expected_lines": [
             "print is a shell builtin",
             "exit is a shell builtin",
             "pwd is a shell builtin",
             "go is a shell builtin",
-            "whatis is a shell builtin"
+            "whatis is a shell builtin",
+            "jobs is a shell builtin"
         ],
         "expected_stderr": ""
     },
