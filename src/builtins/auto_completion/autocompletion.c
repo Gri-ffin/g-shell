@@ -274,7 +274,7 @@ char **shell_completion(const char *text, const int start, int end) {
     matches = rl_completion_matches(text, builtin_generator);
 
     // Only print insults if a root command completion fails
-    if (matches == NULL) {
+    if (matches == NULL && is_command_completion) {
         const int num_insults = sizeof(insults) / sizeof(insults[0]);
         const uint32_t random_index = arc4random_uniform(num_insults);
 
