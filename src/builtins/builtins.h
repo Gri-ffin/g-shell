@@ -5,18 +5,18 @@
 extern char *builtins[];
 extern const int builtins_count;
 
-void handle_type(char *arg);
+int handle_type(char *arg);
 
-void handle_echo(char **args);
+int handle_echo(char **args);
 
-void run_program(const char *program, char **args);
+int run_program(const char *program, char **args);
 
-void handle_pwd();
+int handle_pwd();
 
 void handle_cd(const char *path);
 
 
-typedef void (*builtin_fn)(Command *cmd);
+typedef int (*builtin_fn)(Command *cmd);
 
 typedef struct {
     const char *name;

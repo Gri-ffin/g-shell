@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "command.h"
@@ -72,14 +73,15 @@ static int process_redirections(Command *cmd) {
  * @return A populated Command structure; cmd.arg_count will equal PARSING_ERROR on failure.
  */
 Command parse_command(char *input) {
-    Command cmd;
+    Command head_cmd;
     // Initialize the struct with safe defaults
-    memset(&cmd, 0, sizeof(Command));
-    cmd.fd_out = STDOUT_FILENO;
-    cmd.fd_err = STDERR_FILENO;
-    cmd.saved_stdout = -1;
-    cmd.saved_stderr = -1;
+    memset(&head_cmd, 0, sizeof(Command));
+    head_cmd.fd_out = STDOUT_FILENO;
+    head_cmd.fd_err = STDERR_FILENO;
+    head_cmd.saved_stdout = -1;
+    head_cmd.saved_stderr = -1;
 
+    Command *cur_cmd = &head_cmd;
     bool inside_single_quotes = false;
     bool inside_double_quotes = false;
     char *start_arg = NULL;
@@ -108,10 +110,37 @@ Command parse_command(char *input) {
             continue;
         }
 
+        if (!inside_double_quotes && !inside_single_quotes && strncmp(ptr, "&&", 2) == 0) {
+            // Cap off the current arg if we are building one
+            if (start_arg) {
+                *ptr = '\0';
+                cur_cmd->args[cur_cmd->arg_count++] = start_arg;
+                start_arg = NULL;
+            }
+
+            // finalize the current command args
+            cur_cmd->args[cur_cmd->arg_count] = NULL;
+            cur_cmd->op = AND_OP; // chain
+
+            cur_cmd->next = calloc(1, sizeof(Command));
+            cur_cmd = (Command *) cur_cmd->next;
+
+            // Initialize defaults
+            cur_cmd->fd_out = STDOUT_FILENO;
+            cur_cmd->fd_err = STDERR_FILENO;
+            cur_cmd->saved_stdout = -1;
+            cur_cmd->saved_stderr = -1;
+
+            // don't forget to skip &&
+            *ptr = '\0';
+            ptr += 2;
+            continue;
+        }
+
         if (*ptr == ' ' && !inside_single_quotes && !inside_double_quotes) {
             if (start_arg) {
                 *ptr = '\0';
-                cmd.args[cmd.arg_count++] = start_arg;
+                cur_cmd->args[cur_cmd->arg_count++] = start_arg;
                 start_arg = NULL;
             }
         } else {
@@ -122,29 +151,33 @@ Command parse_command(char *input) {
 
     if (inside_double_quotes || inside_single_quotes) {
         fprintf(stderr, "syntax error: unterminated quote\n");
-        cmd.arg_count = PARSING_ERROR;
-        return cmd;
+        head_cmd.arg_count = PARSING_ERROR;
+        return head_cmd;
     }
 
     if (start_arg) {
-        cmd.args[cmd.arg_count++] = start_arg;
+        cur_cmd->args[cur_cmd->arg_count++] = start_arg;
     }
-    cmd.args[cmd.arg_count] = NULL;
+    cur_cmd->args[cur_cmd->arg_count] = NULL;
 
-    // we have a job we need to run
-    if (cmd.arg_count > 0 && strcmp(cmd.args[cmd.arg_count - 1], "&") == 0) {
-        cmd.background = true;
-        cmd.args[--cmd.arg_count] = NULL;
-    }
-
-    // If we successfully parsed arguments, resolve redirections and set the main command
-    if (cmd.arg_count > 0) {
-        if (process_redirections(&cmd) == -1) {
-            cmd.arg_count = PARSING_ERROR;
-        } else {
-            cmd.cmd = cmd.args[0]; // Set the command
+    cur_cmd = &head_cmd;
+    while (cur_cmd != NULL) {
+        // we have a job we need to run
+        if (cur_cmd->arg_count > 0 && strcmp(cur_cmd->args[cur_cmd->arg_count - 1], "&") == 0) {
+            cur_cmd->background = true;
+            cur_cmd->args[--cur_cmd->arg_count] = NULL;
         }
+
+        // If we successfully parsed arguments, resolve redirections and set the main command
+        if (cur_cmd->arg_count > 0) {
+            if (process_redirections(cur_cmd) == -1) {
+                cur_cmd->arg_count = PARSING_ERROR;
+            } else {
+                cur_cmd->cmd = cur_cmd->args[0]; // Set the command
+            }
+        }
+        cur_cmd = (Command *) cur_cmd->next;
     }
 
-    return cmd;
+    return head_cmd;
 }

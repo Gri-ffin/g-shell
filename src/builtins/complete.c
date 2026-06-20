@@ -20,7 +20,7 @@ DynamicArray *get_completion_scripts() {
  * @param path path to the completion script
  * @param program the name of the program
  */
-void register_complete(const char *path, const char *program) {
+int register_complete(const char *path, const char *program) {
     if (!complete_commands_array) {
         complete_commands_array = create_dynamic_array();
     }
@@ -30,14 +30,14 @@ void register_complete(const char *path, const char *program) {
         if (strcmp(items[i]->program, program) == 0) {
             free(items[i]->path);
             items[i]->path = strdup(path);
-            return;
+            return EXIT_SUCCESS;
         }
     }
 
     CompleteCommand *new_complete_command = malloc(sizeof(CompleteCommand));
     if (!new_complete_command) {
         fprintf(stderr, "error: out of memory.\n");
-        return;
+        return EXIT_FAILURE;
     }
 
     new_complete_command->program = strdup(program);
@@ -47,46 +47,51 @@ void register_complete(const char *path, const char *program) {
         free(new_complete_command->program);
         free(new_complete_command->path);
         free(new_complete_command);
+        return EXIT_FAILURE;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
  *
  * @param command command to remove
  */
-void remove_complete(const CompleteCommand *command) {
+int remove_complete(const CompleteCommand *command) {
     if (!complete_commands_array) {
         fprintf(stderr, "error: no program completion has been registered yet.\n");
-        return;
+        return EXIT_FAILURE;
     }
 
     if (!array_remove_item(complete_commands_array, command)) {
         fprintf(stderr, "error: such program isn't currently registered.\n");
+        return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
 
 /**
  * @param args_count the count of the arguments passed
  * @param args the command line arguments
  */
-void handle_complete(char **args, const int args_count) {
+int handle_complete(char **args, const int args_count) {
     if (args_count <= 1) {
         fprintf(stderr, "error: complete should have at least arguments.\n");
-        return;
+        return EXIT_FAILURE;
     }
     const char *arg = args[1];
 
     if (strcmp(arg, "-p") == 0) {
         if (args_count < 3) {
             fprintf(stderr, "error: program name should be specified.\n");
-            return;
+            return EXIT_FAILURE;
         }
 
         const char *command = args[2];
         // does the array exists at all?
         if (!complete_commands_array || complete_commands_array->count == 0) {
             fprintf(stderr, "complete: %s: can't find the completion specification.\n", command);
-            return;
+            return EXIT_FAILURE;
         }
         const CompleteCommand **items = (const CompleteCommand **) complete_commands_array->items;
 
@@ -95,27 +100,30 @@ void handle_complete(char **args, const int args_count) {
                 const char *program = items[i]->program;
                 const char *path = items[i]->path;
                 printf("%s completion function is in '%s'\n", program, path);
-                return;
+                return EXIT_SUCCESS;
             }
         }
         fprintf(stderr, "complete: %s: can't find the completion specification.\n", command);
-    } else if (strcmp(arg, "-R") == 0) {
+        return EXIT_FAILURE;
+    }
+    if (strcmp(arg, "-R") == 0) {
         if (args_count < 4) {
             fprintf(stderr, "error: program name and path should be specified.\n");
-            return;
+            return EXIT_FAILURE;
         }
         const char *path = args[2];
         const char *program = args[3];
-        register_complete(path, program);
-    } else if (strcmp(arg, "-d") == 0) {
+        return register_complete(path, program);
+    }
+    if (strcmp(arg, "-d") == 0) {
         if (args_count < 3) {
             fprintf(stderr, "error: program name should be specified.\n");
-            return;
+            return EXIT_FAILURE;
         }
 
         if (!complete_commands_array || complete_commands_array->count == 0) {
             fprintf(stderr, "complete: no complete scripts are registered yet.\n");
-            return;
+            return EXIT_FAILURE;
         }
 
         const CompleteCommand **items = (const CompleteCommand **) complete_commands_array->items;
@@ -124,13 +132,13 @@ void handle_complete(char **args, const int args_count) {
         for (int i = 0; i < complete_commands_array->count; i++) {
             if (strcmp(items[i]->program, program) == 0) {
                 command = (CompleteCommand *) items[i];
-                remove_complete(command);
-                return;
+                return remove_complete(command);
             }
         }
 
         fprintf(stderr, "complete: %s: can't find the program.\n", program);
-    } else {
-        fprintf(stderr, "%s: invalid argument.\n", arg);
+        return EXIT_FAILURE;
     }
+    fprintf(stderr, "%s: invalid argument.\n", arg);
+    return EXIT_FAILURE;
 }

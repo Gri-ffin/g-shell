@@ -53,48 +53,67 @@ int main() {
             continue;
         }
 
-        if (cmd.fd_out != STDOUT_FILENO) {
-            cmd.saved_stdout = dup(STDOUT_FILENO);
-            dup2(cmd.fd_out, STDOUT_FILENO);
-        }
+        Command *current_command = &cmd;
+        int last_status = 0;
+        while (current_command != NULL) {
+            if (current_command->fd_out != STDOUT_FILENO) {
+                current_command->saved_stdout = dup(STDOUT_FILENO);
+                dup2(current_command->fd_out, STDOUT_FILENO);
+            }
 
-        if (cmd.fd_err != STDERR_FILENO) {
-            cmd.saved_stderr = dup(STDERR_FILENO);
-            dup2(cmd.fd_err, STDERR_FILENO);
-        }
+            if (current_command->fd_err != STDERR_FILENO) {
+                current_command->saved_stderr = dup(STDERR_FILENO);
+                dup2(current_command->fd_err, STDERR_FILENO);
+            }
 
-        if (strcmp(cmd.cmd, "exit") == 0) {
-            free(input);
-            exit(0);
-        }
-        const builtin_fn fn = find_builtin(cmd.cmd);
-        if (cmd.background && can_background(cmd.cmd)) {
-            const pid_t pid = fork();
-            if (pid == 0) {
-                if (fn) {
-                    fn(&cmd);
-                    exit(0);
-                }
-                run_program(cmd.cmd, cmd.args);
+            if (strcmp(current_command->cmd, "exit") == 0) {
+                free(input);
                 exit(0);
             }
-            jobs_add(pid, cmd.cmd);
-        } else {
-            if (fn) fn(&cmd);
-            else run_program(cmd.cmd, cmd.args);
-        }
+            const builtin_fn fn = find_builtin(current_command->cmd);
+            if (current_command->background && can_background(current_command->cmd)) {
+                const pid_t pid = fork();
+                if (pid == 0) {
+                    if (fn) {
+                        fn(current_command);
+                        exit(0);
+                    }
+                    run_program(current_command->cmd, current_command->args);
+                    exit(0);
+                }
+                jobs_add(pid, current_command->cmd);
+                last_status = 0;
+            } else {
+                if (fn) last_status = fn(current_command);
+                else last_status = run_program(current_command->cmd, current_command->args);
+            }
 
-        if (cmd.saved_stdout != -1) {
-            dup2(cmd.saved_stdout, STDOUT_FILENO); // Put the terminal back
-            close(cmd.saved_stdout); // Close the duplicate
-            close(cmd.fd_out); // Close the file we wrote to
-        }
+            if (current_command->saved_stdout != -1) {
+                dup2(current_command->saved_stdout, STDOUT_FILENO); // Put the terminal back
+                close(current_command->saved_stdout); // Close the duplicate
+                close(current_command->fd_out); // Close the file we wrote to
+            }
 
-        // Restore standard error if we altered it
-        if (cmd.saved_stderr != -1) {
-            dup2(cmd.saved_stderr, STDERR_FILENO); // Put the terminal back
-            close(cmd.saved_stderr); // Close the duplicate
-            close(cmd.fd_err); // Close the file we wrote to
+            // Restore standard error if we altered it
+            if (current_command->saved_stderr != -1) {
+                dup2(current_command->saved_stderr, STDERR_FILENO); // Put the terminal back
+                close(current_command->saved_stderr); // Close the duplicate
+                close(current_command->fd_err); // Close the file we wrote to
+            }
+
+            if (current_command->op == AND_OP && last_status != 0) {
+                break;
+            }
+
+            current_command = (Command *) current_command->next;
+        }
+        // Free the dynamically allocated parts of the command chain
+        // We skip the head node (&cmd) because it's allocated on the stack!
+        Command *node_to_free = (Command *) cmd.next;
+        while (node_to_free != NULL) {
+            Command *tmp = (Command *) node_to_free->next;
+            free(node_to_free);
+            node_to_free = tmp;
         }
 
         free(input);

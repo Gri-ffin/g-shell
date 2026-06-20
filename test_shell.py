@@ -243,6 +243,56 @@ tests = [
         "expected_lines": [],
         "expected_stderr": "error: program name should be specified.\n"
     },
+
+    # --- LOGICAL AND (&&) TESTS ---
+    {
+        "name": "Logical AND: Basic success chain",
+        "input": "print first && print second\n",
+        "expected_lines": ["first", "second"],
+        "expected_stderr": ""
+    },
+    {
+        "name": "Logical AND: Multiple command chaining",
+        "input": "print one && print two && print three\n",
+        "expected_lines": ["one", "two", "three"],
+        "expected_stderr": ""
+    },
+    {
+        "name": "Logical AND: Mix builtins and external commands",
+        "input": "print start && whoami && print end\n",
+        "expected_lines": ["start", getpass.getuser(), "end"],
+        "expected_stderr": ""
+    },
+    {
+        "name": "Logical AND: Short-circuit on external command failure",
+        # Using redirection to prove 'print' never executes.
+        # The parser will create the file, but the shell should never write "failed" into it.
+        "input": "fakecommand_xyz && print failed > test_short_circuit_ext.txt\n",
+        "expected_lines": ["fakecommand_xyz: command not found"],
+        "expected_stderr": "",
+        "expected_file": {
+            "path": "test_short_circuit_ext.txt",
+            "content": ""
+        }
+    },
+    {
+        "name": "Logical AND: Short-circuit on builtin failure",
+        # 'go' will fail and write to stderr, returning a non-zero exit code.
+        # 'pwd' should be skipped, so the text file remains empty.
+        "input": "go /nonexistent_dir_xyz && pwd > test_short_circuit_builtin.txt\n",
+        "expected_lines": [],
+        "expected_stderr": "go: /nonexistent_dir_xyz: No such file or directory\n",
+        "expected_file": {
+            "path": "test_short_circuit_builtin.txt",
+            "content": ""
+        }
+    },
+    {
+        "name": "Logical AND: Chain recovery (spacing/parsing check)",
+        "input": "print   space test   &&   print   worked\n",
+        "expected_lines": ["space test", "worked"],
+        "expected_stderr": ""
+    }
 ]
 
 

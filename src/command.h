@@ -4,6 +4,11 @@
 #define MAX_ARGS 64
 #include <stdbool.h>
 
+typedef enum {
+    NO_OP,
+    AND_OP
+} LogicalOp;
+
 typedef struct {
     char *args[MAX_ARGS];
     int arg_count;
@@ -15,5 +20,9 @@ typedef struct {
     int saved_stdout;
     int saved_stderr;
     bool background;
+
+    LogicalOp op;
+    // next command to run
+    struct Command *next;
 } Command;
 #endif // COMMAND_H
