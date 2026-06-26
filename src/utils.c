@@ -101,14 +101,17 @@ bool array_free(DynamicArray *array) {
  */
 bool array_remove_item(DynamicArray *array, const void *item) {
     if (!array) return false;
+
     for (int i = 0; i < array->count; i++) {
         if (array->items[i] == item) {
-            free(array->items[i]);
-            memmove(&array->items[i], &array->items[i + 1], (array->count - i - 1) * sizeof(void *));
-        }
+            // Shift everything down to overwrite the removed item
+            memmove(&array->items[i],
+                    &array->items[i + 1],
+                    (array->count - i - 1) * sizeof(void *));
 
-        array->count--;
-        return true;
+            array->count--;
+            return true; // Successfully found and removed
+        }
     }
 
     // item not found

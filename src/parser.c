@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <_locale_posix2008.h>
+
 #include "command.h"
 
 #define STDOUT_REDIRECTION_SHORT ">"
@@ -134,6 +136,33 @@ Command parse_command(char *input) {
             // don't forget to skip &&
             *ptr = '\0';
             ptr += 2;
+            continue;
+        }
+
+        if (!inside_double_quotes && !inside_single_quotes && strncmp(ptr, "|", 1) == 0) {
+            // Cap of the current arg if we are building one
+            if (start_arg) {
+                *ptr = '\0';
+                cur_cmd->args[cur_cmd->arg_count++] = start_arg;
+                start_arg = NULL;
+            }
+
+            // finalize the current command args
+            cur_cmd->args[cur_cmd->arg_count] = NULL;
+            cur_cmd->op = PIPE_OP; // chain
+
+            cur_cmd->next = calloc(1, sizeof(Command));
+            cur_cmd = (Command *) cur_cmd->next;
+
+            // Initialize defaults
+            cur_cmd->fd_out = STDOUT_FILENO;
+            cur_cmd->fd_err = STDERR_FILENO;
+            cur_cmd->saved_stdout = -1;
+            cur_cmd->saved_stderr = -1;
+
+            // don't forget to skip |
+            *ptr = '\0';
+            ptr += 1;
             continue;
         }
 
