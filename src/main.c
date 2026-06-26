@@ -56,6 +56,7 @@ int main() {
         Command *current_command = &cmd;
         int last_status = 0;
         while (current_command != NULL) {
+            // TODO: handle chaining pipe operator
             if (current_command->fd_out != STDOUT_FILENO) {
                 current_command->saved_stdout = dup(STDOUT_FILENO);
                 dup2(current_command->fd_out, STDOUT_FILENO);
