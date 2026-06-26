@@ -15,6 +15,8 @@ int handle_pwd();
 
 void handle_cd(const char *path);
 
+void handle_jobs();
+
 
 typedef int (*builtin_fn)(Command *cmd);
 

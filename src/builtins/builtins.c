@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "complete.h"
+#include "jobs.h"
 
 #define COMMAND_NOT_FOUND 127
 
@@ -100,6 +101,13 @@ int handle_go(const char *path) {
 }
 
 /**
+ * Handles the printing of the jobs that are running
+ */
+void handle_jobs() {
+    jobs_print();
+}
+
+/**
  * @brief Forks and executes an external system program with optional I/O redirection.
  * @param program  The name or path of the external command.
  * @param args     The null-terminated argument vector for the command.
@@ -141,12 +149,18 @@ static int do_pwd(Command *cmd) { return handle_pwd(); }
 static int do_go(Command *cmd) { return handle_go(cmd->args[1]); }
 static int do_complete(Command *cmd) { return handle_complete(cmd->args, cmd->arg_count); }
 
+static int do_jobs(Command *cmd) {
+    handle_jobs();
+    return EXIT_SUCCESS;
+}
+
 static const BuiltinEntry dispatch[] = {
     {"complete", do_complete},
     {"print", do_print},
     {"whatis", do_whatis},
     {"pwd", do_pwd},
     {"go", do_go},
+    {"jobs", do_jobs},
     {NULL, NULL}, // sentinel
 };
 

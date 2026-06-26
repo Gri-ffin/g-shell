@@ -35,11 +35,13 @@ void jobs_add(const pid_t pid, const char *cmd) {
  */
 void jobs_print() {
     for (int i = 0; i < num_jobs; i++) {
-        printf("%s with id %d is %s\n",
-               jobs_table[i].cmd,
-               jobs_table[i].id,
-               jobs_table[i].status == JOB_RUNNING ? "Running" : "Done"
-        );
+        if (jobs_table[i].status == JOB_RUNNING) {
+            printf("%s with id %d is %s\n",
+                   jobs_table[i].cmd,
+                   jobs_table[i].id,
+                   "running"
+            );
+        }
     }
 }
 
