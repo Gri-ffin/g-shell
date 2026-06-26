@@ -33,7 +33,7 @@ void jobs_add(const pid_t pid, const char *cmd) {
 }
 
 /**
- * prints all the jobs to the terminal
+ * prints all the jobs to the terminal that are running
  */
 void jobs_print() {
     for (int i = 0; i < num_jobs; i++) {
