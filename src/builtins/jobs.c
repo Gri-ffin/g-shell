@@ -1,5 +1,4 @@
 #include "jobs.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,8 +20,11 @@ void jobs_add(const pid_t pid, const char *cmd) {
         return;
     }
 
+    if (num_jobs == 0) next_id = 1;
+    else next_id++;
+
     jobs_table[num_jobs++] = (Job){
-        .id = next_id++,
+        .id = next_id,
         .pid = pid,
         .cmd = strdup(cmd),
         .status = JOB_RUNNING,
