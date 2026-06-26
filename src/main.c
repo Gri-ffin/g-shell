@@ -104,14 +104,19 @@ int main() {
             if (current_command->op == AND_OP && last_status != 0) {
                 break;
             }
+            if ((current_command->op == AND_OP || current_command->op == PIPE_OP) &&
+                current_command->next->arg_count == 0) {
+                fprintf(stderr, "the chaining command wasn't given.\n");
+                break;
+            }
 
-            current_command = (Command *) current_command->next;
+            current_command = current_command->next;
         }
         // Free the dynamically allocated parts of the command chain
         // We skip the head node (&cmd) because it's allocated on the stack!
-        Command *node_to_free = (Command *) cmd.next;
+        Command *node_to_free = cmd.next;
         while (node_to_free != NULL) {
-            Command *tmp = (Command *) node_to_free->next;
+            Command *tmp = node_to_free->next;
             free(node_to_free);
             node_to_free = tmp;
         }

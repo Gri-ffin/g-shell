@@ -6,10 +6,11 @@
 
 typedef enum {
     NO_OP,
-    AND_OP
+    AND_OP,
+    PIPE_OP,
 } LogicalOp;
 
-typedef struct {
+typedef struct Command {
     char *args[MAX_ARGS];
     int arg_count;
     char *cmd;
