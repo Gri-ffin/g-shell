@@ -1,6 +1,12 @@
 Checks: >
   -*,
   bugprone-*,
+  clang-analyzer-*,
+  clang-analyzer-core.*,
+  clang-analyzer-unix.*,
+  clang-analyzer-security.*,
+  clang-analyzer-nullability.*,
   performance-*,
-  cppcoreguidelines-*,
-  clang-analyzer-*
+  portability-*,
+  -cppcoreguidelines-*,
+  -bugprone-easily-swappable-parameters
