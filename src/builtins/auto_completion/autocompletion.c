@@ -1,16 +1,18 @@
-#include "autocompletion.h"
-#include "../builtins.h"
-#include <readline/readline.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#include <readline/readline.h>
+
+#include "../builtins.h"
+#include "autocompletion.h"
 // ci fail without this
 #include "../../path.h"
 #include "../../utils.h"
 #include "../complete.h"
-#include <limits.h>
-#include <stdint.h>
-#include <sys/stat.h>
 
 #define COMP_POINT_SIZE 32
 
