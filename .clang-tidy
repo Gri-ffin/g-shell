@@ -1,12 +1,16 @@
-Checks: >
-  -*,
+Checks: "-*,
   bugprone-*,
   clang-analyzer-*,
-  clang-analyzer-core.*,
-  clang-analyzer-unix.*,
-  clang-analyzer-security.*,
-  clang-analyzer-nullability.*,
+  concurrency-*,
+  misc-*,
   performance-*,
   portability-*,
+  readability-*,
+  cert-*,
+  -clang-analyzer-cplusplus*,
+  -bugprone-easily-swappable-parameters,
+  -modernize-*,
   -cppcoreguidelines-*,
-  -bugprone-easily-swappable-parameters
+  -readability-braces-around-statements,
+  -readability-uppercase-literal-suffix,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"
