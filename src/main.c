@@ -145,7 +145,7 @@ static void execute_command_chain(Command *head, char *raw_input) {
 
         if (strcmp(current->cmd, "exit") == 0) {
             free(raw_input);
-            _exit(0);
+            exit(0);
         }
 
         last_status = dispatch_command(current);

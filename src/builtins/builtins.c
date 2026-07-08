@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200112L
+
 #include "builtins.h"
 #include "../path.h"
 #include <errno.h>
@@ -12,14 +14,15 @@
 #include "jobs.h"
 
 #define COMMAND_NOT_FOUND 127
+#define BUFF_SIZE 256
 
-char *builtins[] = {"complete", "exit", "go", "jobs", "print", "pwd", "whatis", NULL};
-const int builtins_count = sizeof(builtins) / sizeof(*builtins) - 1;
+char *builtins[] = {"complete", "exit", "go", "history", "jobs", "print", "pwd", "whatis", NULL};
+const int builtins_count = (sizeof(builtins) / sizeof(*builtins)) - 1;
 /**
  * @brief prints the arguments back to the user
  * @param args the arguments passed in the shell
  */
-int handle_print(char **args) {
+static int handle_print(char **args) {
     for (int i = 1; args[i] != NULL; i++) {
         printf("%s", args[i]);
         if (args[i + 1] != NULL) {
@@ -35,19 +38,19 @@ int handle_print(char **args) {
  * or an external program or doesn't exist.
  * @param arg the argument to handle type onto
  */
-int handle_whatis(char *arg) {
-    int i = 0;
+static int handle_whatis(char *arg) {
+    int index = 0;
     if (arg == NULL) {
         printf("type: missing argument\n");
         return EXIT_FAILURE;
     }
 
-    while (builtins[i] != NULL) {
-        if (strcmp(builtins[i], arg) == 0) {
+    while (builtins[index] != NULL) {
+        if (strcmp(builtins[index], arg) == 0) {
             printf("%s is a shell builtin\n", arg);
             return EXIT_FAILURE;
         }
-        i++;
+        index++;
     }
 
     char resolved_path[PATH_MAX];
@@ -67,22 +70,21 @@ int handle_pwd() {
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         printf("%s\n", cwd);
         return EXIT_SUCCESS;
-    } else {
-        perror("pwd failed\n");
-        return EXIT_FAILURE;
     }
+    perror("pwd failed\n");
+    return EXIT_FAILURE;
 }
 
 /**
  * @brief Changes the current working directory, defaulting to HOME if empty or '~'.
  * @param path The destination directory path.
  */
-int handle_go(const char *path) {
+static int handle_go(const char *path) {
     if (path == NULL || strcmp(path, "~") == 0) {
-        const char *home = getenv("HOME");
+        const char *home = getenv("HOME"); // NOLINT(concurrency-mt-unsafe);
 
         if (home == NULL) {
-            fprintf(stderr, "go: environment variable home not set.\n");
+            (void) fprintf(stderr, "go: environment variable home not set.\n");
             return EXIT_FAILURE;
         }
 
@@ -94,7 +96,12 @@ int handle_go(const char *path) {
     }
 
     if (chdir(path) == -1) {
-        fprintf(stderr, "go: %s: %s\n", path, strerror(errno));
+        char errbuf[BUFF_SIZE];
+        if (strerror_r(errno, errbuf, sizeof(errbuf)) == 0) {
+            (void) fprintf(stderr, "go: %s: %s\n", path, errbuf);
+        } else {
+            (void) fprintf(stderr, "go: %s: unknown error (%d)\n", path, errno);
+        }
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
