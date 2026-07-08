@@ -11,9 +11,13 @@
 #include "builtins/jobs.h"
 #include "command.h"
 #include "parser.h"
+#include "utils.h"
 
 // THESE SHOULD NEVER GO TO THE BACKGROUND JOB
 static const char *const no_background[] = {"go", "exit", "cd", NULL};
+
+// In memory array to keep track of previous commands
+DynamicArray *history_array;
 
 /**
  *
@@ -111,6 +115,9 @@ static void restore_std_fds(const Command *cmd, const int saved_stdin) {
  * returns exit code, 0 on success, otherwise its an error
  */
 static int dispatch_command(Command *cmd) {
+    if (!array_push(strdup(cmd->cmd), history_array)) {
+        fprintf(stderr, "failed to push command to history array\n");
+    }
     const builtin_fn builtin_function = find_builtin(cmd->cmd);
 
     if (cmd->background && can_background(cmd->cmd)) {
@@ -178,6 +185,7 @@ int main() {
 
     rl_attempted_completion_function = shell_completion;
     char *input = NULL;
+    history_array = create_dynamic_array();
 
     while (true) {
         jobs_reap();
@@ -208,5 +216,7 @@ int main() {
         free(input);
     }
 
+    // Don't forget to free the history
+    array_free(history_array);
     return 0;
 }

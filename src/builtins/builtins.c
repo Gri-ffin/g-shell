@@ -18,6 +18,9 @@
 
 char *builtins[] = {"complete", "exit", "go", "history", "jobs", "print", "pwd", "whatis", NULL};
 const int builtins_count = (sizeof(builtins) / sizeof(*builtins)) - 1;
+extern DynamicArray *history_array;
+
+
 /**
  * @brief prints the arguments back to the user
  * @param args the arguments passed in the shell
@@ -115,6 +118,20 @@ void handle_jobs() {
 }
 
 /**
+ *
+ * @brief Prints the history of commands typed
+ */
+static void handle_history() {
+    if (history_array == NULL || history_array->count == 0) {
+        printf("You still didn't type any command :<\n");
+        return;
+    }
+    for (int i = 0; i < history_array->count; i++) {
+        printf("\t %d %s\n", i + 1, (char *) history_array->items[i]);
+    }
+}
+
+/**
  * @brief Forks and executes an external system program with optional I/O redirection.
  * @param program  The name or path of the external command.
  * @param args     The null-terminated argument vector for the command.
@@ -161,6 +178,12 @@ static int do_jobs(Command *cmd) {
     return EXIT_SUCCESS;
 }
 
+
+static int do_history(Command *cmd) {
+    handle_history();
+    return EXIT_SUCCESS;
+}
+
 static const BuiltinEntry dispatch[] = {
     {"complete", do_complete},
     {"print", do_print},
@@ -168,6 +191,7 @@ static const BuiltinEntry dispatch[] = {
     {"pwd", do_pwd},
     {"go", do_go},
     {"jobs", do_jobs},
+    {"history", do_history},
     {NULL, NULL}, // sentinel
 };
 
