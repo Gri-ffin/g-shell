@@ -121,12 +121,23 @@ void handle_jobs() {
  *
  * @brief Prints the history of commands typed
  */
-static void handle_history() {
+static void handle_history(char *arg) {
     if (history_array == NULL || history_array->count == 0) {
         printf("You still didn't type any command :<\n");
         return;
     }
-    for (int i = 0; i < history_array->count; i++) {
+    int count;
+    if (arg == NULL) {
+        count = history_array->count;
+    } else {
+        const int parsed = atoi(arg);
+        if (parsed >= history_array->count) {
+            count = history_array->count;
+        } else {
+            count = parsed;
+        }
+    }
+    for (int i = 0; i < count; i++) {
         printf("\t %d %s\n", i + 1, (char *) history_array->items[i]);
     }
 }
@@ -180,7 +191,7 @@ static int do_jobs(Command *cmd) {
 
 
 static int do_history(Command *cmd) {
-    handle_history();
+    handle_history(cmd->args[1]);
     return EXIT_SUCCESS;
 }
 
