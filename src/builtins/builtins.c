@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <readline/history.h>
+
 #include "complete.h"
 #include "jobs.h"
 
@@ -121,25 +123,20 @@ void handle_jobs() {
  *
  * @brief Prints the history of commands typed
  */
-static void handle_history(char *arg) {
-    if (history_array == NULL || history_array->count == 0) {
+static void handle_history(const char *arg) {
+    if (history_length == 0) {
         printf("You still didn't type any command :<\n");
         return;
     }
-    int count;
-    if (arg == NULL) {
-        count = history_array->count;
-    } else {
+    int count = history_length;
+    if (arg != NULL) {
         const int parsed = atoi(arg);
         if (parsed < 0) count = 0;
-        else if (parsed >= history_array->count) {
-            count = history_array->count;
-        } else {
-            count = parsed;
-        }
+        else if (parsed < history_length) count = parsed;
     }
-    for (int i = 0; i < count; i++) {
-        printf("\t %d %s\n", i + 1, (char *) history_array->items[i]);
+    HIST_ENTRY **history = history_list();
+    for (int i = history_length - count; i < history_length; i++) {
+        printf("\t %d %s\n", i + 1, (char *) history[i]->line);
     }
 }
 
