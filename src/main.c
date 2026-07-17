@@ -12,7 +12,6 @@
 #include "builtins/jobs.h"
 #include "command.h"
 #include "parser.h"
-#include "utils.h"
 
 // THESE SHOULD NEVER GO TO THE BACKGROUND JOB
 static const char *const no_background[] = {"go", "exit", "cd", NULL};
