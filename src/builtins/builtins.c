@@ -131,7 +131,8 @@ static void handle_history(char *arg) {
         count = history_array->count;
     } else {
         const int parsed = atoi(arg);
-        if (parsed >= history_array->count) {
+        if (parsed < 0) count = 0;
+        else if (parsed >= history_array->count) {
             count = history_array->count;
         } else {
             count = parsed;
