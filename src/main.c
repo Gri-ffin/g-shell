@@ -17,9 +17,6 @@
 // THESE SHOULD NEVER GO TO THE BACKGROUND JOB
 static const char *const no_background[] = {"go", "exit", "cd", NULL};
 
-// In memory array to keep track of previous commands
-static DynamicArray *history_array;
-
 /**
  *
  * @param cmd command name
@@ -116,9 +113,6 @@ static void restore_std_fds(const Command *cmd, const int saved_stdin) {
  * returns exit code, 0 on success, otherwise its an error
  */
 static int dispatch_command(Command *cmd) {
-    if (!array_push(strdup(cmd->cmd), history_array)) {
-        (void) fprintf(stderr, "failed to push command to history array\n");
-    }
     const builtin_fn builtin_function = find_builtin(cmd->cmd);
 
     if (cmd->background && can_background(cmd->cmd)) {
@@ -148,7 +142,7 @@ static void execute_command_chain(Command *head, char *raw_input) {
 
     while (current != NULL) {
         int pipefd[2] = {-1, -1};
-        int saved_stdin =
+        const int saved_stdin =
                 setup_pipes_and_redirects(current, pipefd, &prev_pipe_read);
 
         if (strcmp(current->cmd, "exit") == 0) {
@@ -186,7 +180,6 @@ int main() {
 
     rl_attempted_completion_function = shell_completion;
     char *input = NULL;
-    history_array = create_dynamic_array();
 
     while (true) {
         jobs_reap();
@@ -228,7 +221,5 @@ int main() {
         free(input);
     }
 
-    // Don't forget to free the history
-    array_free(history_array);
     return 0;
 }
