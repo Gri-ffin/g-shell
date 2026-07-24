@@ -123,14 +123,37 @@ void handle_jobs() {
  *
  * @brief Prints the history of commands typed
  */
-static void handle_history(const char *arg) {
+static int handle_history(char *args[64], const int len) {
     if (history_length == 0) {
         printf("You still didn't type any command :<\n");
-        return;
+        return EXIT_SUCCESS;
     }
+
+    if (len > 3) {
+        fprintf(stderr, "Too many arguments, max is two\n");
+        return EXIT_FAILURE;
+    }
+    if (len == 3) {
+        if (strcmp(args[1], "-r") != 0) {
+            fprintf(stderr, "Only -r is supported right now\n");
+            return EXIT_FAILURE;
+        }
+
+        const int code = read_history(args[2]);
+        if (code != 0) {
+            perror("history");
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
+    }
+
     int count = history_length;
-    if (arg != NULL) {
-        const int parsed = atoi(arg);
+    if (args[1] != NULL) {
+        if (strcmp(args[1], "-r") == 0) {
+            fprintf(stderr, "You forgot to pass the file path.\n");
+            return EXIT_FAILURE;
+        }
+        const int parsed = atoi(args[1]);
         if (parsed < 0) count = 0;
         else if (parsed < history_length) count = parsed;
     }
@@ -138,6 +161,7 @@ static void handle_history(const char *arg) {
     for (int i = history_length - count; i < history_length; i++) {
         printf("\t %d %s\n", i + 1, (char *) history[i]->line);
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -189,8 +213,7 @@ static int do_jobs(Command *cmd) {
 
 
 static int do_history(Command *cmd) {
-    handle_history(cmd->args[1]);
-    return EXIT_SUCCESS;
+    return handle_history(cmd->args, cmd->arg_count);
 }
 
 static const BuiltinEntry dispatch[] = {
