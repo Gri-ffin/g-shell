@@ -134,29 +134,55 @@ static int handle_history(char *args[64], const int len) {
         return EXIT_FAILURE;
     }
     if (len == 3) {
-        if (strcmp(args[1], "-r") != 0) {
-            fprintf(stderr, "Only -r is supported right now\n");
-            return EXIT_FAILURE;
+        if (strcmp(args[1], "-r") == 0) {
+            if (read_history(args[2]) != 0) {
+                perror("history");
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
         }
-
-        const int code = read_history(args[2]);
-        if (code != 0) {
-            perror("history");
-            return EXIT_FAILURE;
+        if (strcmp(args[1], "-w") == 0) {
+            if (write_history(args[2]) != 0) {
+                perror("history");
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
         }
-        return EXIT_SUCCESS;
+        fprintf(stderr, "history: unsupported option '%s' (only -r and -w take an argument)\n", args[1]);
+        return EXIT_FAILURE;
     }
 
     int count = history_length;
+
     if (args[1] != NULL) {
         if (strcmp(args[1], "-r") == 0) {
-            fprintf(stderr, "You forgot to pass the file path.\n");
+            if (read_history(NULL) != 0) {
+                perror("history");
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
+        }
+        if (strcmp(args[1], "-w") == 0) {
+            if (write_history(NULL) != 0) {
+                perror("history");
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
+        }
+
+        char *endptr;
+        errno = 0;
+        const long parsed = strtol(args[1], &endptr, 10);
+
+        if (*args[1] == '\0' || *endptr != '\0' || errno == ERANGE) {
+            fprintf(stderr, "history: invalid option or argument '%s'\n", args[1]);
             return EXIT_FAILURE;
         }
-        const int parsed = atoi(args[1]);
+
         if (parsed < 0) count = 0;
-        else if (parsed < history_length) count = parsed;
+        else if (parsed < history_length) count = (int) parsed;
     }
+
     HIST_ENTRY **history = history_list();
     for (int i = history_length - count; i < history_length; i++) {
         printf("\t %d %s\n", i + 1, (char *) history[i]->line);
